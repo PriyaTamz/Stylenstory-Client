@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Custom styles */
+.product-card:hover .product-actions {
+  opacity: 1;
+  transform: translateY(0);
+}
+
