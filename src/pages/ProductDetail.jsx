@@ -1,21 +1,19 @@
 import { useParams } from 'react-router-dom';
 import { useProducts, useCart } from '../context';
 import { useState } from 'react';
-
-
+import ProductCard from '../components/product/ProductCard';
 import { FiShoppingCart, FiHeart, FiStar, FiChevronLeft } from 'react-icons/fi';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const { getProductById, getRelatedProducts } = useProducts();
   const { addToCart } = useCart();
+
   const product = getProductById(parseInt(id));
-  
   const [selectedColor, setSelectedColor] = useState(product?.colors[0] || '');
   const [selectedSize, setSelectedSize] = useState(product?.sizes[0] || '');
   const [quantity, setQuantity] = useState(1);
   const [mainImage, setMainImage] = useState(product?.image || '');
-  
   const relatedProducts = product ? getRelatedProducts(product.id, product.category) : [];
 
   if (!product) {
@@ -38,47 +36,49 @@ const ProductDetail = () => {
   return (
     <div className="bg-gray-50 min-h-screen py-8">
       <div className="container mx-auto px-4">
-        <a href="/products" className="flex items-center text-primary mb-4">
+        <a href="/products" className="flex items-center text-blue-600 mb-4 hover:underline">
           <FiChevronLeft className="mr-1" /> Back to Products
         </a>
-        
+
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6">
-            {/* Product Images */}
+            {/* Images */}
             <div>
               <div className="mb-4 h-96 bg-gray-100 rounded-lg overflow-hidden">
                 <img 
                   src={mainImage} 
                   alt={product.name} 
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-cover"
                 />
               </div>
               <div className="grid grid-cols-4 gap-2">
                 {[product.image, ...(product.additionalImages || [])].map((img, index) => (
-                  <button 
+                  <button
                     key={index}
-                    className={`h-20 bg-gray-100 rounded-md overflow-hidden ${mainImage === img ? 'ring-2 ring-primary' : ''}`}
+                    className={`h-20 bg-gray-100 rounded-md overflow-hidden ${
+                      mainImage === img ? 'ring-2 ring-blue-600' : ''
+                    }`}
                     onClick={() => setMainImage(img)}
                   >
-                    <img 
-                      src={img} 
-                      alt={`${product.name} ${index + 1}`} 
-                      className="w-full h-full object-contain"
+                    <img
+                      src={img}
+                      alt={`${product.name} ${index + 1}`}
+                      className="w-full h-full object-cover"
                     />
                   </button>
                 ))}
               </div>
             </div>
-            
+
             {/* Product Info */}
             <div>
               <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
               <div className="flex items-center mb-4">
                 <div className="flex text-yellow-400 mr-2">
                   {[...Array(5)].map((_, i) => (
-                    <FiStar 
-                      key={i} 
-                      fill={i < Math.floor(product.rating) ? 'currentColor' : 'none'} 
+                    <FiStar
+                      key={i}
+                      fill={i < Math.floor(product.rating) ? 'currentColor' : 'none'}
                     />
                   ))}
                 </div>
@@ -86,21 +86,23 @@ const ProductDetail = () => {
                   {product.rating.toFixed(1)} ({product.reviews} reviews)
                 </span>
               </div>
-              
+
               <p className="text-2xl font-bold text-gray-900 mb-6">
                 ${product.price.toFixed(2)}
               </p>
-              
+
               <p className="text-gray-700 mb-8">{product.description}</p>
-              
-              {/* Color Selector */}
+
+              {/* Color */}
               <div className="mb-6">
                 <h3 className="text-sm font-medium text-gray-900 mb-2">Color</h3>
                 <div className="flex space-x-2">
                   {product.colors.map(color => (
                     <button
                       key={color}
-                      className={`w-8 h-8 rounded-full border-2 ${selectedColor === color ? 'border-primary' : 'border-transparent'}`}
+                      className={`w-8 h-8 rounded-full border-2 ${
+                        selectedColor === color ? 'border-blue-600' : 'border-transparent'
+                      }`}
                       style={{ backgroundColor: color }}
                       onClick={() => setSelectedColor(color)}
                       title={color}
@@ -108,15 +110,19 @@ const ProductDetail = () => {
                   ))}
                 </div>
               </div>
-              
-              {/* Size Selector */}
+
+              {/* Size */}
               <div className="mb-6">
                 <h3 className="text-sm font-medium text-gray-900 mb-2">Size</h3>
                 <div className="flex flex-wrap gap-2">
                   {product.sizes.map(size => (
                     <button
                       key={size}
-                      className={`px-4 py-2 border rounded-md ${selectedSize === size ? 'bg-primary text-white border-primary' : 'border-gray-300'}`}
+                      className={`px-4 py-2 border rounded-md ${
+                        selectedSize === size
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'border-gray-300 text-gray-800'
+                      }`}
                       onClick={() => setSelectedSize(size)}
                     >
                       {size}
@@ -124,8 +130,8 @@ const ProductDetail = () => {
                   ))}
                 </div>
               </div>
-              
-              {/* Quantity Selector */}
+
+              {/* Quantity */}
               <div className="mb-8">
                 <h3 className="text-sm font-medium text-gray-900 mb-2">Quantity</h3>
                 <div className="flex items-center border border-gray-300 rounded-md w-32">
@@ -144,12 +150,12 @@ const ProductDetail = () => {
                   </button>
                 </div>
               </div>
-              
-              {/* Action Buttons */}
+
+              {/* Buttons */}
               <div className="flex space-x-4">
                 <button
                   onClick={handleAddToCart}
-                  className="flex-1 bg-primary text-white py-3 px-6 rounded-md font-medium hover:bg-secondary flex items-center justify-center"
+                  className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-md font-medium hover:bg-blue-700 flex items-center justify-center transition-all duration-300"
                 >
                   <FiShoppingCart className="mr-2" />
                   Add to Cart
@@ -161,7 +167,7 @@ const ProductDetail = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Related Products */}
         {relatedProducts.length > 0 && (
           <div className="mt-16">

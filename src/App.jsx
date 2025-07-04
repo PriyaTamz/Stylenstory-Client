@@ -6,10 +6,11 @@ import Footer from './components/common/Footer';
 import HomePage from './pages/HomePage';
 import ProductListing from './pages/ProductListing';
 import ProductDetail from './pages/ProductDetail';
-import CartSidebar from './components/cart/CartSidebar';
+import AddToCart from './components/cart/AddToCart';
 import AboutPage from './pages/AboutPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ContactPage from './pages/ContactPage';
+import ScrollToTop from './context/ScrollToTop';
 
 const App = () => {
   return (
@@ -19,9 +20,11 @@ const App = () => {
           <div className="flex flex-col min-h-screen bg-gray-100 text-gray-900">
             {/* Header */}
             <Header />
+            {/* ScrollToTop */}
+            <ScrollToTop/>
 
             {/* Cart Sidebar */}
-            <CartSidebar />
+            <AddToCart />
 
             {/* Main Content */}
             <main className="flex-grow ">

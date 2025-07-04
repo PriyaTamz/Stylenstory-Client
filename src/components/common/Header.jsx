@@ -74,7 +74,7 @@ const Header = () => {
         staggerChildren: 0.05,
         staggerDirection: -1,
         when: "afterChildren"
-      }
+      } 
     }
   };
 
@@ -204,6 +204,7 @@ const Header = () => {
                 </button>
               )}
             </div>
+            
 
             <button 
               className="relative p-2 rounded-full hover:bg-gray-100 transition-colors group"
