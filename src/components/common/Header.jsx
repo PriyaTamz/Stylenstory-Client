@@ -48,10 +48,9 @@ const Header = () => {
   }, []);
 
   const handleLogin = () => {
-    setIsLoggedIn(true);
+    navigate('/auth'); // Changed to navigate to auth page
     setUserDropdownOpen(false);
     setMobileMenuOpen(false);
-    navigate('/profile');
   };
 
   const handleLogout = () => {

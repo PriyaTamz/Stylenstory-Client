@@ -11,6 +11,7 @@ import AboutPage from './pages/AboutPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ContactPage from './pages/ContactPage';
 import ScrollToTop from './context/ScrollToTop';
+import Auth from './pages/Auth';
 
 const App = () => {
   return (
@@ -20,6 +21,7 @@ const App = () => {
           <div className="flex flex-col min-h-screen bg-gray-100 text-gray-900">
             {/* Header */}
             <Header />
+            
             {/* ScrollToTop */}
             <ScrollToTop/>
 
@@ -27,13 +29,14 @@ const App = () => {
             <AddToCart />
 
             {/* Main Content */}
-            <main className="flex-grow ">
+            <main className="flex-grow">
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/products" element={<ProductListing />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
                 <Route path="/about" element={<AboutPage />} />
-                <Route path="/Contact" element={<ContactPage/>} />
+                <Route path="/contact" element={<ContactPage/>} />
+                <Route path="/auth" element={<Auth />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </main>
