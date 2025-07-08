@@ -1,21 +1,20 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { FiShoppingCart, FiMenu, FiX, FiUser, FiLogOut, FiLogIn, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import { useState, useEffect, useRef } from 'react';
 import logo from '../../assets/stylenstorelogo.png';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Header = () => {
   const { cartCount, setCartOpen } = useCart();
+  const { isLoggedIn, user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [mobileSubmenuOpen, setMobileSubmenuOpen] = useState(false);
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -26,21 +25,16 @@ const Header = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Scroll effect
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu when resizing to desktop
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
         setMobileMenuOpen(false);
-        setMobileSubmenuOpen(false);
       }
     };
     window.addEventListener('resize', handleResize);
@@ -48,18 +42,17 @@ const Header = () => {
   }, []);
 
   const handleLogin = () => {
-    navigate('/auth'); // Changed to navigate to auth page
+    navigate('/auth');
     setUserDropdownOpen(false);
     setMobileMenuOpen(false);
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
+    logout();
     setUserDropdownOpen(false);
     setMobileMenuOpen(false);
   };
 
-  // Animation variants
   const menuVariants = {
     open: { 
       opacity: 1,
@@ -98,7 +91,6 @@ const Header = () => {
     >
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex justify-between items-center">
-          {/* Left section - Logo and mobile menu */}
           <div className="flex items-center">
             <button 
               className="md:hidden mr-3 p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-100 transition-all"
@@ -125,7 +117,6 @@ const Header = () => {
             </Link>
           </div>
           
-          {/* Center section - Navigation */}
           <nav className="hidden md:flex space-x-4 lg:space-x-6">
             {[
               { path: "/", name: "Home" },
@@ -144,7 +135,6 @@ const Header = () => {
             ))}
           </nav>
           
-          {/* Right section - User and cart */}
           <div className="flex items-center space-x-3 sm:space-x-4">
             <div className="relative" ref={dropdownRef}>
               {isLoggedIn ? (
@@ -169,6 +159,9 @@ const Header = () => {
                         transition={{ duration: 0.2 }}
                         className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-100"
                       >
+                        <div className="px-4 py-2 text-sm font-medium text-gray-700 border-b">
+                          Hi, {user?.name || 'User'}
+                        </div>
                         <Link 
                           to="/profile" 
                           className="block px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
@@ -204,7 +197,6 @@ const Header = () => {
               )}
             </div>
             
-
             <button 
               className="relative p-2 rounded-full hover:bg-gray-100 transition-colors group"
               onClick={() => setCartOpen(true)}
@@ -228,7 +220,6 @@ const Header = () => {
           </div>
         </div>
         
-        {/* Mobile menu */}
         <AnimatePresence>
           {mobileMenuOpen && (
             <motion.div
@@ -259,6 +250,9 @@ const Header = () => {
                 <motion.div variants={itemVariants} className="border-t pt-2 mt-1">
                   {isLoggedIn ? (
                     <>
+                      <div className="px-4 py-2 text-sm font-medium text-gray-700">
+                        Hi, {user?.name || 'User'}
+                      </div>
                       <Link 
                         to="/profile" 
                         className="block py-3 px-4 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors flex items-center"

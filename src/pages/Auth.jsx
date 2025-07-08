@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { FaUser, FaLock, FaPhone, FaEnvelope, FaShoppingBag, FaGoogle, FaFacebook } from 'react-icons/fa';
+import { FaUser, FaLock, FaPhone, FaEnvelope, FaShoppingBag } from 'react-icons/fa';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function Auth() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('login');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
@@ -15,9 +20,15 @@ function Auth() {
     confirmPassword: ''
   });
   const [errors, setErrors] = useState({});
-  const [authSuccess, setAuthSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Handle OTP countdown timer
+  useEffect(() => {
+    // Set active tab based on state (if redirected from protected route)
+    if (location.state?.from) {
+      setActiveTab('login');
+    }
+  }, [location]);
+
   useEffect(() => {
     let timer;
     if (otpCountdown > 0) {
@@ -26,15 +37,8 @@ function Auth() {
     return () => clearTimeout(timer);
   }, [otpCountdown]);
 
-  const validatePhone = (number) => {
-    const regex = /^[0-9]{10}$/;
-    return regex.test(number);
-  };
-
-  const validateEmail = (email) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
-  };
+  const validatePhone = (number) => /^[0-9]{10}$/.test(number);
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSendOtp = () => {
     if (!validatePhone(phone)) {
@@ -42,67 +46,65 @@ function Auth() {
       return;
     }
     
-    // Simulate sending OTP to backend
-    console.log(`OTP sent to ${phone}`);
-    setOtpSent(true);
-    setOtpCountdown(30); // 30 seconds countdown
-    setErrors({});
+    setIsLoading(true);
+    // Simulate API call
+    setTimeout(() => {
+      setOtpSent(true);
+      setOtpCountdown(30);
+      setErrors({});
+      setIsLoading(false);
+    }, 1000);
   };
 
   const handleVerifyOtp = () => {
-    // In a real app, you would verify this with your backend
     if (otp.length !== 6) {
       setErrors({ otp: 'Please enter a 6-digit OTP' });
       return;
     }
     
-    // Simulate successful verification
-    console.log(`OTP ${otp} verified for ${phone}`);
-    setAuthSuccess(true);
-    setTimeout(() => setAuthSuccess(false), 3000);
+    setIsLoading(true);
+    // Simulate API verification
+    setTimeout(() => {
+      const userData = {
+        name: 'User',
+        email: `${phone}@example.com`,
+        phone
+      };
+      login('dummy-auth-token', userData);
+      setIsLoading(false);
+    }, 1500);
   };
 
   const handleRegister = () => {
     const newErrors = {};
     
-    if (!registrationData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
-    
-    if (!validateEmail(registrationData.email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-    
-    if (!validatePhone(registrationData.phone)) {
-      newErrors.phone = 'Please enter a valid 10-digit mobile number';
-    }
-    
-    if (registrationData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-    
-    if (registrationData.password !== registrationData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
+    if (!registrationData.name.trim()) newErrors.name = 'Name is required';
+    if (!validateEmail(registrationData.email)) newErrors.email = 'Please enter a valid email';
+    if (!validatePhone(registrationData.phone)) newErrors.phone = 'Please enter a valid 10-digit mobile number';
+    if (registrationData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    if (registrationData.password !== registrationData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
     
-    // Simulate registration
-    console.log('Registration data:', registrationData);
-    setAuthSuccess(true);
-    setTimeout(() => setAuthSuccess(false), 3000);
-    setErrors({});
+    setIsLoading(true);
+    // Simulate registration API call
+    setTimeout(() => {
+      const userData = {
+        name: registrationData.name,
+        email: registrationData.email,
+        phone: registrationData.phone
+      };
+      login('dummy-auth-token', userData);
+      setIsLoading(false);
+    }, 1500);
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setRegistrationData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setRegistrationData(prev => ({ ...prev, [name]: value }));
   };
 
   const resetForm = () => {
@@ -132,7 +134,6 @@ function Auth() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {/* Tabs */}
           <div className="flex border-b mb-6">
             <button
               onClick={() => { setActiveTab('login'); resetForm(); }}
@@ -148,15 +149,7 @@ function Auth() {
             </button>
           </div>
 
-          {/* Success Message */}
-          {authSuccess && (
-            <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-              {activeTab === 'login' ? 'Login successful!' : 'Registration successful!'}
-            </div>
-          )}
-
-          {/* Login Form */}
-          {activeTab === 'login' && (
+          {activeTab === 'login' ? (
             <div className="space-y-6">
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
@@ -220,28 +213,23 @@ function Auth() {
                 {!otpSent ? (
                   <button
                     onClick={handleSendOtp}
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    disabled={isLoading}
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Send OTP
+                    {isLoading ? 'Sending...' : 'Send OTP'}
                   </button>
                 ) : (
                   <button
                     onClick={handleVerifyOtp}
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    disabled={isLoading}
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Verify OTP
+                    {isLoading ? 'Verifying...' : 'Verify OTP'}
                   </button>
                 )}
               </div>
-
-             
-
-             
             </div>
-          )}
-
-          {/* Registration Form */}
-          {activeTab === 'register' && (
+          ) : (
             <div className="space-y-6">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">
@@ -351,15 +339,12 @@ function Auth() {
               <div>
                 <button
                   onClick={handleRegister}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  disabled={isLoading}
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Register
+                  {isLoading ? 'Registering...' : 'Register'}
                 </button>
               </div>
-
-             
-
-             
             </div>
           )}
         </div>
