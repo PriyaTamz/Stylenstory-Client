@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { FaUser, FaLock, FaPhone, FaEnvelope, FaShoppingBag } from 'react-icons/fa';
+import { FaUser, FaLock, FaPhone, FaEnvelope, FaTshirt } from 'react-icons/fa';
+import { FiSend, FiCheckCircle } from 'react-icons/fi';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import LoginBackGroundImage from '../assets/login-bg.jpg';
+import RegisterBackGroundImage from '../assets/register-bg.jpg';
 
 function Auth() {
   const { login } = useAuth();
@@ -13,17 +16,22 @@ function Auth() {
   const [otpSent, setOtpSent] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
   const [registrationData, setRegistrationData] = useState({
-    name: '',
-    email: '',
+    firstName: '',
+    lastName: '',
     phone: '',
-    password: '',
-    confirmPassword: ''
+    email: ''
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [successAnimation, setSuccessAnimation] = useState(false);
+
+  // Background images for login and register
+  const bgImages = {
+    login: LoginBackGroundImage,
+    register: RegisterBackGroundImage
+  };
 
   useEffect(() => {
-    // Set active tab based on state (if redirected from protected route)
     if (location.state?.from) {
       setActiveTab('login');
     }
@@ -47,7 +55,6 @@ function Auth() {
     }
     
     setIsLoading(true);
-    // Simulate API call
     setTimeout(() => {
       setOtpSent(true);
       setOtpCountdown(30);
@@ -63,7 +70,6 @@ function Auth() {
     }
     
     setIsLoading(true);
-    // Simulate API verification
     setTimeout(() => {
       const userData = {
         name: 'User',
@@ -71,18 +77,21 @@ function Auth() {
         phone
       };
       login('dummy-auth-token', userData);
-      setIsLoading(false);
+      setSuccessAnimation(true);
+      setTimeout(() => {
+        setIsLoading(false);
+        navigate('/');
+      }, 1500);
     }, 1500);
   };
 
   const handleRegister = () => {
     const newErrors = {};
     
-    if (!registrationData.name.trim()) newErrors.name = 'Name is required';
+    if (!registrationData.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!registrationData.lastName.trim()) newErrors.lastName = 'Last name is required';
     if (!validateEmail(registrationData.email)) newErrors.email = 'Please enter a valid email';
     if (!validatePhone(registrationData.phone)) newErrors.phone = 'Please enter a valid 10-digit mobile number';
-    if (registrationData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    if (registrationData.password !== registrationData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -90,15 +99,18 @@ function Auth() {
     }
     
     setIsLoading(true);
-    // Simulate registration API call
     setTimeout(() => {
       const userData = {
-        name: registrationData.name,
+        name: `${registrationData.firstName} ${registrationData.lastName}`,
         email: registrationData.email,
         phone: registrationData.phone
       };
       login('dummy-auth-token', userData);
-      setIsLoading(false);
+      setSuccessAnimation(true);
+      setTimeout(() => {
+        setIsLoading(false);
+        navigate('/');
+      }, 1500);
     }, 1500);
   };
 
@@ -112,244 +124,324 @@ function Auth() {
     setOtp('');
     setOtpSent(false);
     setRegistrationData({
-      name: '',
-      email: '',
+      firstName: '',
+      lastName: '',
       phone: '',
-      password: '',
-      confirmPassword: ''
+      email: ''
     });
     setErrors({});
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <FaShoppingBag className="text-indigo-600 text-5xl" />
-        </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          {activeTab === 'login' ? 'Sign in to your account' : 'Create a new account'}
-        </h2>
+    <div className="min-h-screen flex">
+      {/* Background image */}
+      <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
+        <div className="absolute inset-0  z-10"></div>
+        <img 
+          src={activeTab === 'login' ? LoginBackGroundImage : RegisterBackGroundImage}
+          alt="Background"
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+          style={{ opacity: 0.9 }}
+        />
+        {/* <div className="relative z-20 h-full flex flex-col justify-center px-12">
+          <div className="flex items-center mb-6">
+            <FaTshirt className="text-white text-4xl mr-3" />
+            <h1 className="text-4xl font-bold text-white">Stylenstory</h1>
+          </div>
+          <p className="text-xl text-white mb-8">
+            {activeTab === 'login' 
+              ? "Sign in to explore our exclusive t-shirt collection" 
+              : "Join us to create your unique style story"}
+          </p>
+        </div> */}
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <div className="flex border-b mb-6">
-            <button
-              onClick={() => { setActiveTab('login'); resetForm(); }}
-              className={`flex-1 py-4 font-medium text-sm ${activeTab === 'login' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}
-            >
-              Login
-            </button>
-            <button
-              onClick={() => { setActiveTab('register'); resetForm(); }}
-              className={`flex-1 py-4 font-medium text-sm ${activeTab === 'register' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}
-            >
-              Register
-            </button>
+      {/* Auth form */}
+      <div className="w-full lg:w-1/2 bg-gray-50 flex flex-col justify-center py-12 px-6">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="flex justify-center lg:hidden">
+            <FaTshirt className="text-indigo-600 text-5xl" />
           </div>
+          <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
+            {activeTab === 'login' ? 'Welcome Back!' : 'Join Stylenstory'}
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            {activeTab === 'login' 
+              ? 'Sign in to access your personalized style dashboard' 
+              : 'Create an account to start your style journey'}
+          </p>
+        </div>
 
-          {activeTab === 'login' ? (
-            <div className="space-y-6">
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                  Mobile Number
-                </label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaPhone className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    disabled={otpSent}
-                    className={`block w-full pl-10 pr-3 py-2 border ${errors.phone ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                    placeholder="9876543210"
-                  />
+        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="bg-white py-8 px-6 shadow-xl rounded-2xl">
+            {/* Tab buttons */}
+            <div className="flex border-b border-gray-200 mb-8">
+              <button
+                onClick={() => { setActiveTab('login'); resetForm(); }}
+                className={`flex-1 py-3 font-medium text-sm ${activeTab === 'login' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => { setActiveTab('register'); resetForm(); }}
+                className={`flex-1 py-3 font-medium text-sm ${activeTab === 'register' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Register
+              </button>
+            </div>
+
+            {/* Success animation overlay */}
+            {successAnimation && (
+              <div className="absolute inset-0 bg-white bg-opacity-90 flex flex-col items-center justify-center rounded-2xl z-10">
+                <div className="animate-bounce">
+                  <FiCheckCircle className="text-green-500 text-6xl" />
                 </div>
-                {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+                <p className="mt-4 text-xl font-medium text-gray-900">
+                  {activeTab === 'login' ? 'Login Successful!' : 'Registration Complete!'}
+                </p>
+                <p className="mt-2 text-gray-600">Redirecting you now...</p>
               </div>
+            )}
 
-              {otpSent && (
+            {/* Login Form */}
+            {activeTab === 'login' ? (
+              <div className="space-y-5">
                 <div>
-                  <label htmlFor="otp" className="block text-sm font-medium text-gray-700">
-                    OTP
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    Mobile Number
                   </label>
                   <div className="mt-1 relative rounded-md shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FaLock className="h-5 w-5 text-gray-400" />
+                      <FaPhone className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
-                      id="otp"
-                      name="otp"
-                      type="text"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      className={`block w-full pl-10 pr-3 py-2 border ${errors.otp ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                      placeholder="Enter 6-digit OTP"
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      disabled={otpSent}
+                      className={`block w-full pl-10 pr-3 py-3 border ${errors.phone ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                      placeholder="9876543210"
                     />
                   </div>
-                  {errors.otp && <p className="mt-1 text-sm text-red-600">{errors.otp}</p>}
-                  <div className="mt-1 text-xs text-gray-500">
-                    {otpCountdown > 0 ? (
-                      `OTP expires in ${otpCountdown} seconds`
-                    ) : (
+                  {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+                </div>
+
+                {otpSent && (
+                  <div className="animate-fade-in">
+                    <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-1">
+                      OTP Verification
+                    </label>
+                    <div className="mt-1 relative rounded-md shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaLock className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="otp"
+                        name="otp"
+                        type="text"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        className={`block w-full pl-10 pr-3 py-3 border ${errors.otp ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                        placeholder="Enter 6-digit OTP"
+                      />
+                    </div>
+                    {errors.otp && <p className="mt-1 text-sm text-red-600">{errors.otp}</p>}
+                    <div className="mt-2 text-xs text-gray-500 flex justify-between">
+                      {otpCountdown > 0 ? (
+                        <span>OTP expires in {otpCountdown} seconds</span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleSendOtp}
+                          className="text-indigo-600 hover:text-indigo-500 font-medium"
+                        >
+                          Resend OTP
+                        </button>
+                      )}
                       <button
                         type="button"
-                        onClick={handleSendOtp}
-                        className="text-indigo-600 hover:text-indigo-500"
+                        onClick={() => setOtp('123456')} // Demo shortcut
+                        className="text-gray-500 hover:text-gray-700"
                       >
-                        Resend OTP
+                        Use demo OTP
                       </button>
-                    )}
+                    </div>
                   </div>
-                </div>
-              )}
-
-              <div>
-                {!otpSent ? (
-                  <button
-                    onClick={handleSendOtp}
-                    disabled={isLoading}
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isLoading ? 'Sending...' : 'Send OTP'}
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleVerifyOtp}
-                    disabled={isLoading}
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isLoading ? 'Verifying...' : 'Verify OTP'}
-                  </button>
                 )}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  Full Name
-                </label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaUser className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    value={registrationData.name}
-                    onChange={handleInputChange}
-                    className={`block w-full pl-10 pr-3 py-2 border ${errors.name ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                    placeholder="John Doe"
-                  />
-                </div>
-                {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
-              </div>
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email Address
-                </label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaEnvelope className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={registrationData.email}
-                    onChange={handleInputChange}
-                    className={`block w-full pl-10 pr-3 py-2 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                    placeholder="john@example.com"
-                  />
+                <div className="pt-2">
+                  {!otpSent ? (
+                    <button
+                      onClick={handleSendOtp}
+                      disabled={isLoading}
+                      className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300"
+                    >
+                      {isLoading ? (
+                        'Sending...'
+                      ) : (
+                        <>
+                          <FiSend className="mr-2" />
+                          Send OTP
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleVerifyOtp}
+                      disabled={isLoading}
+                      className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300"
+                    >
+                      {isLoading ? 'Verifying...' : 'Verify & Sign In'}
+                    </button>
+                  )}
                 </div>
-                {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
-              </div>
 
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                  Mobile Number
-                </label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaPhone className="h-5 w-5 text-gray-400" />
+               
+
+                
+              </div>
+            ) : (
+              /* Registration Form */
+              <div className="space-y-5">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                      First Name
+                    </label>
+                    <div className="mt-1 relative rounded-md shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaUser className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="firstName"
+                        name="firstName"
+                        type="text"
+                        value={registrationData.firstName}
+                        onChange={handleInputChange}
+                        className={`block w-full pl-10 pr-3 py-3 border ${errors.firstName ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                        placeholder="John"
+                      />
+                    </div>
+                    {errors.firstName && <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>}
                   </div>
-                  <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    value={registrationData.phone}
-                    onChange={handleInputChange}
-                    className={`block w-full pl-10 pr-3 py-2 border ${errors.phone ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                    placeholder="9876543210"
-                  />
-                </div>
-                {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
-              </div>
 
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Password
-                </label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaLock className="h-5 w-5 text-gray-400" />
+                  <div>
+                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                      Last Name
+                    </label>
+                    <div className="mt-1 relative rounded-md shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaUser className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="lastName"
+                        name="lastName"
+                        type="text"
+                        value={registrationData.lastName}
+                        onChange={handleInputChange}
+                        className={`block w-full pl-10 pr-3 py-3 border ${errors.lastName ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                        placeholder="Doe"
+                      />
+                    </div>
+                    {errors.lastName && <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>}
                   </div>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={registrationData.password}
-                    onChange={handleInputChange}
-                    className={`block w-full pl-10 pr-3 py-2 border ${errors.password ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                    placeholder="At least 6 characters"
-                  />
                 </div>
-                {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
-              </div>
 
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                  Confirm Password
-                </label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaLock className="h-5 w-5 text-gray-400" />
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    Mobile Number
+                  </label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaPhone className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={registrationData.phone}
+                      onChange={handleInputChange}
+                      className={`block w-full pl-10 pr-3 py-3 border ${errors.phone ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                      placeholder="9876543210"
+                    />
                   </div>
-                  <input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    value={registrationData.confirmPassword}
-                    onChange={handleInputChange}
-                    className={`block w-full pl-10 pr-3 py-2 border ${errors.confirmPassword ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                    placeholder="Re-enter your password"
-                  />
+                  {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
                 </div>
-                {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>}
-              </div>
 
-              <div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address
+                  </label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaEnvelope className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={registrationData.email}
+                      onChange={handleInputChange}
+                      className={`block w-full pl-10 pr-3 py-3 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                      placeholder="john@example.com"
+                    />
+                  </div>
+                  {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    id="terms"
+                    name="terms"
+                    type="checkbox"
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
+                    I agree to the <a href="#" className="text-indigo-600 hover:text-indigo-500">Terms</a> and <a href="#" className="text-indigo-600 hover:text-indigo-500">Privacy Policy</a>
+                  </label>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    onClick={handleRegister}
+                    disabled={isLoading}
+                    className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300"
+                  >
+                    {isLoading ? 'Creating Account...' : 'Create Account'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6 text-center text-sm text-gray-600">
+            {activeTab === 'login' ? (
+              <p>
+                Don't have an account?{' '}
                 <button
-                  onClick={handleRegister}
-                  disabled={isLoading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setActiveTab('register')}
+                  className="font-medium text-indigo-600 hover:text-indigo-500"
                 >
-                  {isLoading ? 'Registering...' : 'Register'}
+                  Sign up
                 </button>
-              </div>
-            </div>
-          )}
+              </p>
+            ) : (
+              <p>
+                Already have an account?{' '}
+                <button
+                  onClick={() => setActiveTab('login')}
+                  className="font-medium text-indigo-600 hover:text-indigo-500"
+                >
+                  Sign in
+                </button>
+              </p>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </div>  
   );
 }
 
