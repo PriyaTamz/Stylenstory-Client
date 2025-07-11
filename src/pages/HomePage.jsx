@@ -356,7 +356,7 @@ const HomePage = () => {
               alt="Promo Banner Background"
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0   "></div>
+               <div className="absolute inset-0  bg-purple-950/40 "></div>
           </div>
 
           <div className="max-w-5xl mx-auto text-center relative z-10">

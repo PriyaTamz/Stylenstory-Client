@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { FaUser, FaLock, FaPhone, FaEnvelope, FaTshirt } from 'react-icons/fa';
+import { FaUser, FaLock, FaPhone, FaEnvelope } from 'react-icons/fa';
 import { FiSend, FiCheckCircle } from 'react-icons/fi';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import LoginBackGroundImage from '../assets/login-bg.jpg';
 import RegisterBackGroundImage from '../assets/register-bg.jpg';
+import StylenLogo from '../assets/stylenlogo.png';
 
 function Auth() {
   const { login } = useAuth();
@@ -24,6 +25,8 @@ function Auth() {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [successAnimation, setSuccessAnimation] = useState(false);
+  const [registerOtpSent, setRegisterOtpSent] = useState(false);
+  const [registerOtp, setRegisterOtp] = useState('');
 
   // Background images for login and register
   const bgImages = {
@@ -85,7 +88,7 @@ function Auth() {
     }, 1500);
   };
 
-  const handleRegister = () => {
+  const handleSendRegisterOtp = () => {
     const newErrors = {};
     
     if (!registrationData.firstName.trim()) newErrors.firstName = 'First name is required';
@@ -95,6 +98,21 @@ function Auth() {
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      return;
+    }
+    
+    setIsLoading(true);
+    setTimeout(() => {
+      setRegisterOtpSent(true);
+      setOtpCountdown(30);
+      setErrors({});
+      setIsLoading(false);
+    }, 1000);
+  };
+
+  const handleVerifyRegisterOtp = () => {
+    if (registerOtp.length !== 6) {
+      setErrors({ registerOtp: 'Please enter a 6-digit OTP' });
       return;
     }
     
@@ -123,6 +141,8 @@ function Auth() {
     setPhone('');
     setOtp('');
     setOtpSent(false);
+    setRegisterOtp('');
+    setRegisterOtpSent(false);
     setRegistrationData({
       firstName: '',
       lastName: '',
@@ -136,31 +156,20 @@ function Auth() {
     <div className="min-h-screen flex">
       {/* Background image */}
       <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0  z-10"></div>
+        <div className="absolute inset-0 z-10"></div>
         <img 
           src={activeTab === 'login' ? LoginBackGroundImage : RegisterBackGroundImage}
           alt="Background"
           className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
           style={{ opacity: 0.9 }}
         />
-        {/* <div className="relative z-20 h-full flex flex-col justify-center px-12">
-          <div className="flex items-center mb-6">
-            <FaTshirt className="text-white text-4xl mr-3" />
-            <h1 className="text-4xl font-bold text-white">Stylenstory</h1>
-          </div>
-          <p className="text-xl text-white mb-8">
-            {activeTab === 'login' 
-              ? "Sign in to explore our exclusive t-shirt collection" 
-              : "Join us to create your unique style story"}
-          </p>
-        </div> */}
       </div>
 
       {/* Auth form */}
       <div className="w-full lg:w-1/2 bg-gray-50 flex flex-col justify-center py-12 px-6">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="flex justify-center lg:hidden">
-            <FaTshirt className="text-indigo-600 text-5xl" />
+            <img src={StylenLogo} alt="Stylen Logo" className="h-12" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
             {activeTab === 'login' ? 'Welcome Back!' : 'Join Stylenstory'}
@@ -297,10 +306,6 @@ function Auth() {
                     </button>
                   )}
                 </div>
-
-               
-
-                
               </div>
             ) : (
               /* Registration Form */
@@ -350,27 +355,6 @@ function Auth() {
                 </div>
 
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                    Mobile Number
-                  </label>
-                  <div className="mt-1 relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FaPhone className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      value={registrationData.phone}
-                      onChange={handleInputChange}
-                      className={`block w-full pl-10 pr-3 py-3 border ${errors.phone ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                      placeholder="9876543210"
-                    />
-                  </div>
-                  {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
-                </div>
-
-                <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                     Email Address
                   </label>
@@ -391,6 +375,71 @@ function Auth() {
                   {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
                 </div>
 
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    Mobile Number
+                  </label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaPhone className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={registrationData.phone}
+                      onChange={handleInputChange}
+                      disabled={registerOtpSent}
+                      className={`block w-full pl-10 pr-3 py-3 border ${errors.phone ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                      placeholder="9876543210"
+                    />
+                  </div>
+                  {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+                </div>
+
+                {registerOtpSent && (
+                  <div className="animate-fade-in">
+                    <label htmlFor="registerOtp" className="block text-sm font-medium text-gray-700 mb-1">
+                      OTP Verification
+                    </label>
+                    <div className="mt-1 relative rounded-md shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaLock className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="registerOtp"
+                        name="registerOtp"
+                        type="text"
+                        value={registerOtp}
+                        onChange={(e) => setRegisterOtp(e.target.value)}
+                        className={`block w-full pl-10 pr-3 py-3 border ${errors.registerOtp ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                        placeholder="Enter 6-digit OTP"
+                      />
+                    </div>
+                    {errors.registerOtp && <p className="mt-1 text-sm text-red-600">{errors.registerOtp}</p>}
+                    <div className="mt-2 text-xs text-gray-500 flex justify-between">
+                      {otpCountdown > 0 ? (
+                        <span>OTP expires in {otpCountdown} seconds</span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleSendRegisterOtp}
+                          className="text-indigo-600 hover:text-indigo-500 font-medium"
+                        >
+                          Resend OTP
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setRegisterOtp('123456')} // Demo shortcut
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        Use demo OTP
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center">
                   <input
                     id="terms"
@@ -404,13 +453,30 @@ function Auth() {
                 </div>
 
                 <div className="pt-2">
-                  <button
-                    onClick={handleRegister}
-                    disabled={isLoading}
-                    className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300"
-                  >
-                    {isLoading ? 'Creating Account...' : 'Create Account'}
-                  </button>
+                  {!registerOtpSent ? (
+                    <button
+                      onClick={handleSendRegisterOtp}
+                      disabled={isLoading}
+                      className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300"
+                    >
+                      {isLoading ? (
+                        'Sending...'
+                      ) : (
+                        <>
+                          <FiSend className="mr-2" />
+                          Send OTP
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleVerifyRegisterOtp}
+                      disabled={isLoading}
+                      className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300"
+                    >
+                      {isLoading ? 'Verifying...' : 'Verify & Register'}
+                    </button>
+                  )}
                 </div>
               </div>
             )}
