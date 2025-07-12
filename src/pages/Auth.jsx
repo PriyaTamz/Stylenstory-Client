@@ -3,6 +3,12 @@ import { FaUser, FaLock, FaPhone, FaEnvelope } from 'react-icons/fa';
 import { FiSend, FiCheckCircle } from 'react-icons/fi';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { 
+  registerUser, 
+  verifyRegisterOtp, 
+  requestLoginOtp, 
+  verifyLoginOtp 
+} from '../services/api';
 import LoginBackGroundImage from '../assets/login-bg.jpg';
 import RegisterBackGroundImage from '../assets/register-bg.jpg';
 import StylenLogo from '../assets/stylenlogo.png';
@@ -27,6 +33,7 @@ function Auth() {
   const [successAnimation, setSuccessAnimation] = useState(false);
   const [registerOtpSent, setRegisterOtpSent] = useState(false);
   const [registerOtp, setRegisterOtp] = useState('');
+  const [registerSession, setRegisterSession] = useState(null);
 
   // Background images for login and register
   const bgImages = {
@@ -51,44 +58,47 @@ function Auth() {
   const validatePhone = (number) => /^[0-9]{10}$/.test(number);
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     if (!validatePhone(phone)) {
       setErrors({ phone: 'Please enter a valid 10-digit mobile number' });
       return;
     }
     
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      const { data } = await requestLoginOtp(phone);
       setOtpSent(true);
       setOtpCountdown(30);
       setErrors({});
+    } catch (error) {
+      setErrors({ general: error.message || 'Failed to send OTP' });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleVerifyOtp = () => {
+  const handleVerifyOtp = async () => {
     if (otp.length !== 6) {
       setErrors({ otp: 'Please enter a 6-digit OTP' });
       return;
     }
     
     setIsLoading(true);
-    setTimeout(() => {
-      const userData = {
-        name: 'User',
-        email: `${phone}@example.com`,
-        phone
-      };
-      login('dummy-auth-token', userData);
+    try {
+      const { data } = await verifyLoginOtp({ phone, otp });
+      login(data.token, data.user);
       setSuccessAnimation(true);
       setTimeout(() => {
         setIsLoading(false);
-        navigate('/');
+        navigate(location.state?.from?.pathname || '/');
       }, 1500);
-    }, 1500);
+    } catch (error) {
+      setErrors({ otp: error.message || 'Invalid OTP' });
+      setIsLoading(false);
+    }
   };
 
-  const handleSendRegisterOtp = () => {
+  const handleSendRegisterOtp = async () => {
     const newErrors = {};
     
     if (!registrationData.firstName.trim()) newErrors.firstName = 'First name is required';
@@ -102,34 +112,51 @@ function Auth() {
     }
     
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      const { data } = await registerUser(registrationData);
       setRegisterOtpSent(true);
       setOtpCountdown(30);
+      setRegisterSession({
+        userId: data.userId,
+        sessionId: data.sessionId,
+        phone: registrationData.phone
+      });
       setErrors({});
+    } catch (error) {
+      setErrors({ general: error.message || 'Registration failed' });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleVerifyRegisterOtp = () => {
+  const handleVerifyRegisterOtp = async () => {
     if (registerOtp.length !== 6) {
       setErrors({ registerOtp: 'Please enter a 6-digit OTP' });
       return;
     }
     
+    if (!registerSession) {
+      setErrors({ general: 'Session expired. Please try again.' });
+      return;
+    }
+    
     setIsLoading(true);
-    setTimeout(() => {
-      const userData = {
-        name: `${registrationData.firstName} ${registrationData.lastName}`,
-        email: registrationData.email,
-        phone: registrationData.phone
-      };
-      login('dummy-auth-token', userData);
+    try {
+      const { data } = await verifyRegisterOtp({
+        phone: registerSession.phone,
+        otp: registerOtp,
+        userId: registerSession.userId
+      });
+      login(data.token, data.user);
       setSuccessAnimation(true);
       setTimeout(() => {
         setIsLoading(false);
         navigate('/');
       }, 1500);
-    }, 1500);
+    } catch (error) {
+      setErrors({ registerOtp: error.message || 'Invalid OTP' });
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -143,6 +170,7 @@ function Auth() {
     setOtpSent(false);
     setRegisterOtp('');
     setRegisterOtpSent(false);
+    setRegisterSession(null);
     setRegistrationData({
       firstName: '',
       lastName: '',
@@ -212,6 +240,13 @@ function Auth() {
               </div>
             )}
 
+            {/* Error message */}
+            {errors.general && (
+              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+                {errors.general}
+              </div>
+            )}
+
             {/* Login Form */}
             {activeTab === 'login' ? (
               <div className="space-y-5">
@@ -269,13 +304,6 @@ function Auth() {
                           Resend OTP
                         </button>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => setOtp('123456')} // Demo shortcut
-                        className="text-gray-500 hover:text-gray-700"
-                      >
-                        Use demo OTP
-                      </button>
                     </div>
                   </div>
                 )}
@@ -429,13 +457,6 @@ function Auth() {
                           Resend OTP
                         </button>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => setRegisterOtp('123456')} // Demo shortcut
-                        className="text-gray-500 hover:text-gray-700"
-                      >
-                        Use demo OTP
-                      </button>
                     </div>
                   </div>
                 )}

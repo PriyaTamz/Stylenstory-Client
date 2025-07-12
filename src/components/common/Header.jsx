@@ -17,7 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const Header = () => {
   const { cartCount, setCartOpen } = useCart();
-  const { isLoggedIn, user, logout } = useAuth();
+  const { isLoggedIn, user, logout, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -56,8 +56,12 @@ const Header = () => {
     setMobileMenuOpen(false);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
     setUserDropdownOpen(false);
     setMobileMenuOpen(false);
   };
@@ -91,6 +95,23 @@ const Header = () => {
       transition: { duration: 0.2 },
     },
   };
+
+  if (isLoading) {
+    return (
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm py-3">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <Link to="/" className="flex items-center">
+                <img src={logo} alt="Stylenstore Logo" className="h-10" />
+              </Link>
+            </div>
+            <div className="animate-pulse h-8 w-20 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header

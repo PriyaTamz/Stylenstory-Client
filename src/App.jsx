@@ -7,6 +7,13 @@ import Footer from './components/common/Footer';
 import AppRoutes from './AppRoutes';
 import AddToCart from './components/cart/AddToCart';
 import ScrollToTop from './context/ScrollToTop';
+import { setAuthToken } from './services/api';
+
+// Initialize auth token if exists
+const token = localStorage.getItem('authToken');
+if (token) {
+  setAuthToken(token);
+}
 
 const Layout = () => {
   const location = useLocation();
