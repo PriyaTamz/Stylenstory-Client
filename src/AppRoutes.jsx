@@ -10,6 +10,7 @@ import Auth from './pages/Auth';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ProfilePage from './pages/ProfilePage';
 import OrdersPage from './pages/OrdersPage';
+import AdminLogin from './pages/admin/AdminLogin';
 
 const AppRoutes = () => {
   return (
@@ -23,6 +24,8 @@ const AppRoutes = () => {
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
       <Route path="*" element={<NotFoundPage />} />
+      <Route path="admin" element={<AdminLogin/>} />
+
     </Routes>
   );
 };

@@ -19,7 +19,7 @@ const Layout = () => {
   const location = useLocation();
 
   // List of full-page routes
-  const fullPageRoutes = ['/auth'];
+  const fullPageRoutes = ['/auth','/admin'];
 
   const isFullPage = fullPageRoutes.includes(location.pathname);
 
