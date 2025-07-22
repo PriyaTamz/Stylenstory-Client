@@ -10,7 +10,12 @@ import Auth from './pages/Auth';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ProfilePage from './pages/ProfilePage';
 import OrdersPage from './pages/OrdersPage';
-import AdminLogin from './pages/admin/AdminLogin';
+import AdminLogin from './pages/admin/adminLogin';
+import AdminDash from './pages/admin/AdminDash';
+import AdminProducts from './pages/admin/ProductsDetails';
+import AdminOrders from './pages/admin/Orders'; 
+import AdminUsers from './pages/admin/Users';
+
 
 const AppRoutes = () => {
   return (
@@ -24,7 +29,17 @@ const AppRoutes = () => {
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
       <Route path="*" element={<NotFoundPage />} />
+
+      {/* Admin routes */}
       <Route path="admin" element={<AdminLogin/>} />
+      <Route path="/admindash" element={<AdminDash/>} />
+      <Route path="/admindash/products" element={<AdminProducts />} />
+        <Route path="/admindash/orders" element={<AdminOrders />} />
+        <Route path="/admindash/users" element={<AdminUsers />} />
+     
+      
+    
+
 
     </Routes>
   );
