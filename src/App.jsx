@@ -2,24 +2,33 @@ import React from 'react';
 import { BrowserRouter as Router, useLocation } from 'react-router-dom';
 import { CartProvider, ProductProvider } from './context';
 import { AuthProvider } from './context/AuthContext';
+import { AdminAuthProvider } from './context/AdminAuthContext';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 import AppRoutes from './AppRoutes';
 import AddToCart from './components/cart/AddToCart';
 import ScrollToTop from './context/ScrollToTop';
 import { setAuthToken } from './services/api';
+import { setAdminAuthToken } from './services/adminApi';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-// Initialize auth token if exists
+// Initialize auth tokens if they exist
 const token = localStorage.getItem('authToken');
 if (token) {
   setAuthToken(token);
+}
+
+const adminToken = localStorage.getItem('adminAuthToken');
+if (adminToken) {
+  setAdminAuthToken(adminToken);
 }
 
 const Layout = () => {
   const location = useLocation();
 
   // List of full-page routes
-  const fullPageRoutes = ['/auth','/admin','/admindash', '/admindash/products', '/admindash/orders', '/admindash/users'];
+  const fullPageRoutes = ['/auth', '/admin', '/admindash', '/admindash/products', '/admindash/orders', '/admindash/users'];
 
   const isFullPage = fullPageRoutes.includes(location.pathname);
 
@@ -34,6 +43,20 @@ const Layout = () => {
       </main>
 
       {!isFullPage && <Footer />}
+      
+      {/* Toast Container - should be rendered once in your app */}
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </div>
   );
 };
@@ -44,7 +67,9 @@ const App = () => {
       <ProductProvider>
         <CartProvider>
           <AuthProvider>
-            <Layout />
+            <AdminAuthProvider>
+              <Layout />
+            </AdminAuthProvider>
           </AuthProvider>
         </CartProvider>
       </ProductProvider>
