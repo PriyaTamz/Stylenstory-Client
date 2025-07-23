@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { loginAdmin, logoutAdmin, checkAdminAuthStatus, setAdminAuthToken } from '../services/adminApi';
+import { loginAdmin, logoutAdmin, checkAdminAuthStatus } from '../services/adminApi';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
@@ -14,16 +14,13 @@ export const AdminAuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem('adminAuthToken');
-        if (token) {
-          setAdminAuthToken(token);
-          const { admin } = await checkAdminAuthStatus();
-          setAdmin(admin);
+        const authData = await checkAdminAuthStatus();
+        if (authData.isAuthenticated) {
+          setAdmin(authData.admin);
           setIsAdminAuthenticated(true);
         }
       } catch (error) {
         console.error('Admin auth check failed:', error);
-        localStorage.removeItem('adminAuthToken');
       } finally {
         setLoading(false);
       }
@@ -34,9 +31,7 @@ export const AdminAuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      const { token, admin, message } = await loginAdmin(credentials);
-      localStorage.setItem('adminAuthToken', token);
-      setAdminAuthToken(token);
+      const { admin, message } = await loginAdmin(credentials);
       setAdmin(admin);
       setIsAdminAuthenticated(true);
       toast.success(message);
@@ -50,7 +45,6 @@ export const AdminAuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await logoutAdmin();
-      localStorage.removeItem('adminAuthToken');
       setAdmin(null);
       setIsAdminAuthenticated(false);
       navigate('/admin');

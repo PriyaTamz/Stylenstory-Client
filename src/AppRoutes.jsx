@@ -10,7 +10,7 @@ import Auth from './pages/Auth';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ProfilePage from './pages/ProfilePage';
 import OrdersPage from './pages/OrdersPage';
-import AdminLogin from './pages/admin/adminLogin';
+import AdminLogin from './pages/admin/AdminLogin';
 import AdminDash from './pages/admin/AdminDash';
 import AdminProducts from './pages/admin/ProductsDetails';
 import AdminOrders from './pages/admin/Orders'; 

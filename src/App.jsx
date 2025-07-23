@@ -9,19 +9,13 @@ import AppRoutes from './AppRoutes';
 import AddToCart from './components/cart/AddToCart';
 import ScrollToTop from './context/ScrollToTop';
 import { setAuthToken } from './services/api';
-import { setAdminAuthToken } from './services/adminApi';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Initialize auth tokens if they exist
+// Initialize auth token if it exists (for regular users)
 const token = localStorage.getItem('authToken');
 if (token) {
   setAuthToken(token);
-}
-
-const adminToken = localStorage.getItem('adminAuthToken');
-if (adminToken) {
-  setAdminAuthToken(adminToken);
 }
 
 const Layout = () => {

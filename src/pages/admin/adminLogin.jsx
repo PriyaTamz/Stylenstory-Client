@@ -11,28 +11,18 @@ const AdminLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAdminAuth();
   const navigate = useNavigate();
-  const [errorShown, setErrorShown] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    
-    // Clear any existing toasts and reset error flag
     toast.dismiss();
-    setErrorShown(false);
 
     if (!username.trim()) {
-      toast.error('Username is required', {
-        position: "top-center",
-        autoClose: 3000,
-      });
+      toast.error('Username is required', { position: "top-center" });
       return;
     }
 
     if (!password) {
-      toast.error('Password is required', {
-        position: "top-center",
-        autoClose: 3000,
-      });
+      toast.error('Password is required', { position: "top-center" });
       return;
     }
 
@@ -40,29 +30,10 @@ const AdminLogin = () => {
     
     try {
       await login({ username, password });
-      
-     
-      
-      setTimeout(() => navigate('/admindash'), 2000);
-      
+      navigate('/admindash');
     } catch (error) {
       console.error('Login error:', error);
-      
-      if (!errorShown) {
-        // Use consistent error message format
-        let errorMessage = 'Login failed. Invalid credentials or not an admin.';
-        
-        if (error?.response?.data?.message) {
-          errorMessage = error.response.data.message;
-        } else if (error?.message) {
-          errorMessage = error.message;
-        }
-        
-        
-        
-        setErrorShown(true);
-      }
-      
+      toast.error(error.message || 'Login failed', { position: "top-center" });
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +48,6 @@ const AdminLogin = () => {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
-          {/* Username Field */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
             <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500">
@@ -85,10 +55,7 @@ const AdminLogin = () => {
               <input
                 type="text"
                 value={username}
-                onChange={(e) => {
-                  setUsername(e.target.value);
-                  setErrorShown(false); // Reset error flag when user types
-                }}
+                onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter admin username"
                 className="w-full outline-none bg-transparent"
                 autoFocus
@@ -96,7 +63,6 @@ const AdminLogin = () => {
             </div>
           </div>
 
-          {/* Password Field */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500">
@@ -104,17 +70,13 @@ const AdminLogin = () => {
               <input
                 type="password"
                 value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setErrorShown(false); // Reset error flag when user types
-                }}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 className="w-full outline-none bg-transparent"
               />
             </div>
           </div>
 
-          {/* Login Button */}
           <button
             type="submit"
             disabled={isLoading}

@@ -7,15 +7,6 @@ const adminApi = axios.create({
   withCredentials: true,
 });
 
-// Helper function to set admin auth token
-const setAdminAuthToken = (token) => {
-  if (token) {
-    adminApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  } else {
-    delete adminApi.defaults.headers.common['Authorization'];
-  }
-};
-
 // Register admin
 export const registerAdmin = async (adminData) => {
   try {
@@ -55,5 +46,3 @@ export const logoutAdmin = async () => {
     throw error.response?.data || { message: 'Admin logout failed' };
   }
 };
-
-export { setAdminAuthToken };
