@@ -21,13 +21,11 @@ if (token) {
 const Layout = () => {
   const location = useLocation();
 
-  // List of full-page routes
-  const fullPageRoutes = ['/auth', '/admin', '/admindash', '/admindash/products', '/admindash/orders', '/admindash/users'];
-
-  const isFullPage = fullPageRoutes.includes(location.pathname);
+  // A more scalable way to detect full-page routes
+  const isFullPage = location.pathname.startsWith('/auth') || location.pathname.startsWith('/admin');
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 text-gray-900">
+    <div className="flex flex-col min-h-screen bg-gray-100 text-gray-900 font-sans">
       {!isFullPage && <Header />}
       {!isFullPage && <ScrollToTop />}
       {!isFullPage && <AddToCart />}
@@ -38,7 +36,6 @@ const Layout = () => {
 
       {!isFullPage && <Footer />}
       
-      {/* Toast Container - should be rendered once in your app */}
       <ToastContainer
         position="top-center"
         autoClose={3000}

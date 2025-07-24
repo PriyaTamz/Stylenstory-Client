@@ -1,5 +1,7 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Outlet } from 'react-router-dom';
+
+// User-facing pages
 import HomePage from './pages/HomePage';
 import ProductListing from './pages/ProductListing';
 import ProductDetail from './pages/ProductDetail';
@@ -7,19 +9,25 @@ import AboutPage from './pages/AboutPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ContactPage from './pages/ContactPage';
 import Auth from './pages/Auth';
-import ProtectedRoute from './components/auth/ProtectedRoute';
 import ProfilePage from './pages/ProfilePage';
 import OrdersPage from './pages/OrdersPage';
+
+// Admin pages and layout
 import AdminLogin from './pages/admin/AdminLogin';
+import AdminLayout from './pages/admin/AdminLayout'; // New Layout
 import AdminDash from './pages/admin/AdminDash';
 import AdminProducts from './pages/admin/ProductsDetails';
-import AdminOrders from './pages/admin/Orders'; 
+import AdminOrders from './pages/admin/Orders';
 import AdminUsers from './pages/admin/Users';
+
+// Auth wrappers
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import ProtectedAdminRoute from './components/auth/ProtectedAdminRoute';
 
 const AppRoutes = () => {
   return (
     <Routes>
+      {/* User Routes */}
       <Route path="/" element={<HomePage />} />
       <Route path="/products" element={<ProductListing />} />
       <Route path="/product/:id" element={<ProductDetail />} />
@@ -30,28 +38,23 @@ const AppRoutes = () => {
       <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
       <Route path="*" element={<NotFoundPage />} />
 
-      {/* Admin routes */}
+      {/* Admin Login Route */}
       <Route path="/admin" element={<AdminLogin />} />
-      <Route path="/admindash" element={
-        <ProtectedAdminRoute>
-          <AdminDash />
-        </ProtectedAdminRoute>
-      } />
-      <Route path="/admindash/products" element={
-        <ProtectedAdminRoute>
-          <AdminProducts />
-        </ProtectedAdminRoute>
-      } />
-      <Route path="/admindash/orders" element={
-        <ProtectedAdminRoute>
-          <AdminOrders />
-        </ProtectedAdminRoute>
-      } />
-      <Route path="/admindash/users" element={
-        <ProtectedAdminRoute>
-          <AdminUsers />
-        </ProtectedAdminRoute>
-      } />
+
+      {/* Admin Dashboard Routes - Wrapped in the new AdminLayout */}
+      <Route 
+        path="/admindash" 
+        element={
+          <ProtectedAdminRoute>
+            <AdminLayout />
+          </ProtectedAdminRoute>
+        }
+      >
+        <Route index element={<AdminDash />} />
+        <Route path="products" element={<AdminProducts />} />
+        <Route path="orders" element={<AdminOrders />} />
+        <Route path="users" element={<AdminUsers />} />
+      </Route>
     </Routes>
   );
 };
