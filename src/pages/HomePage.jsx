@@ -17,7 +17,7 @@ const HomePage = () => {
   // Slides data with different content for each
   const slides = [
     {
-      bg:Banner1,
+      bg: Banner1,
       title: "Unleash Effortless Style",
       subtitle:
         "Ultra-soft, trend-forward tees designed to elevate your everyday vibe.",
@@ -260,6 +260,7 @@ const HomePage = () => {
         </section>
 
         {/* Featured Products */}
+
         <section className="py-20 px-4">
           <div className="max-w-7xl mx-auto">
             <motion.h2
@@ -273,16 +274,18 @@ const HomePage = () => {
               Featured Products
             </motion.h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Modified grid for better mobile responsiveness */}
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {featuredProducts.map((product, idx) => (
                 <motion.div
                   key={product.id}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: idx * 0.1 }}
-                  viewport={{ once: true }}
+                  viewport={{ once: true, margin: "0px 0px -100px 0px" }}
+                  className="w-full"
                 >
-                  <ProductCard product={product} />
+                  <ProductCard product={product} className="h-full" />
                 </motion.div>
               ))}
             </div>
@@ -356,7 +359,7 @@ const HomePage = () => {
               alt="Promo Banner Background"
               className="w-full h-full object-cover"
             />
-               <div className="absolute inset-0  bg-purple-950/40 "></div>
+            <div className="absolute inset-0  bg-purple-950/40 "></div>
           </div>
 
           <div className="max-w-5xl mx-auto text-center relative z-10">
