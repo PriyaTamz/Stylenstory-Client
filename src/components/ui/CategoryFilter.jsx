@@ -2,24 +2,20 @@ import React from 'react';
 
 const CategoryFilter = ({ categories, selected, onSelect }) => {
   return (
-    <div className="mb-6">
-      <label htmlFor="category-filter" className="block text-sm font-medium text-gray-700 mb-1">
-        Filter by Category
-      </label>
-      <div className="relative">
-        <select
-          id="category-filter"
-          value={selected}
-          onChange={(e) => onSelect(e.target.value)}
-          className="block w-full px-4 py-2 text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    <div className="space-y-2">
+      {categories.map((cat) => (
+        <button
+          key={cat}
+          onClick={() => onSelect(cat)}
+          className={`w-full text-left px-4 py-2 text-sm rounded-md transition-colors duration-200 capitalize ${
+            selected === cat
+              ? 'bg-blue-600 text-white font-semibold shadow'
+              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+          }`}
         >
-          {categories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat === 'all' ? 'All Categories' : cat}
-            </option>
-          ))}
-        </select>
-      </div>
+          {cat === 'all' ? 'All Categories' : cat}
+        </button>
+      ))}
     </div>
   );
 };

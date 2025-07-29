@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Outlet } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 
 // User-facing pages
 import HomePage from './pages/HomePage';
@@ -11,10 +11,11 @@ import ContactPage from './pages/ContactPage';
 import Auth from './pages/Auth';
 import ProfilePage from './pages/ProfilePage';
 import OrdersPage from './pages/OrdersPage';
+import CartPage from './pages/CartPage'; // <-- IMPORT THE NEW CART PAGE
 
 // Admin pages and layout
 import AdminLogin from './pages/admin/AdminLogin';
-import AdminLayout from './pages/admin/AdminLayout'; // New Layout
+import AdminLayout from './pages/admin/AdminLayout';
 import AdminDash from './pages/admin/AdminDash';
 import AdminProducts from './pages/admin/ProductsDetails';
 import AdminOrders from './pages/admin/Orders';
@@ -34,6 +35,7 @@ const AppRoutes = () => {
       <Route path="/about" element={<AboutPage />} />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/auth" element={<Auth />} />
+      <Route path="/cart" element={<CartPage />} /> {/* <-- ADD THE CART ROUTE */}
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
       <Route path="*" element={<NotFoundPage />} />
@@ -41,7 +43,7 @@ const AppRoutes = () => {
       {/* Admin Login Route */}
       <Route path="/admin" element={<AdminLogin />} />
 
-      {/* Admin Dashboard Routes - Wrapped in the new AdminLayout */}
+      {/* Admin Dashboard Routes */}
       <Route 
         path="/admindash" 
         element={

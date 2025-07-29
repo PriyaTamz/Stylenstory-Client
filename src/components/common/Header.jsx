@@ -16,7 +16,8 @@ import logo from "../../assets/stylenstoryimage.png";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Header = () => {
-  const { cartCount, setCartOpen } = useCart();
+  // --- CHANGE 1: Remove setCartOpen from the hook ---
+  const { cartCount } = useCart();
   const { isLoggedIn, user, logout, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -227,9 +228,10 @@ const Header = () => {
               )}
             </div>
 
-            <button
+            {/* --- CHANGE 2 & 3: Converted button to Link, removed onClick --- */}
+            <Link
+              to="/cart"
               className="relative p-2 rounded-full hover:bg-gray-100 transition-colors group"
-              onClick={() => setCartOpen(true)}
               aria-label={`Cart (${cartCount} items)`}
             >
               <FiShoppingCart
@@ -246,7 +248,8 @@ const Header = () => {
                   {cartCount}
                 </motion.span>
               )}
-            </button>
+            </Link>
+
           </div>
         </div>
 
@@ -265,7 +268,7 @@ const Header = () => {
                   { path: "/products", name: "Shop" },
                   { path: "/about", name: "About" },
                   { path: "/contact", name: "Contact" },
-                ].map((link, index) => (
+                ].map((link) => (
                   <motion.div key={link.path} variants={itemVariants}>
                     <Link
                       to={link.path}
@@ -292,6 +295,13 @@ const Header = () => {
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         <FiUser className="mr-3" /> Profile
+                      </Link>
+                       <Link
+                        to="/orders"
+                        className="block py-3 px-4 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors flex items-center"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <FiShoppingCart className="mr-3" /> Orders
                       </Link>
                       <button
                         onClick={handleLogout}

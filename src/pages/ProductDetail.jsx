@@ -1,44 +1,85 @@
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { useProducts, useCart } from '../context';
-import { useState } from 'react';
+import axios from 'axios'; // Import axios directly here
 import ProductCard from '../components/product/ProductCard';
-import { FiShoppingCart, FiHeart, FiStar, FiChevronLeft } from 'react-icons/fi';
+import { FiShoppingCart, FiHeart, FiChevronLeft, FiLoader } from 'react-icons/fi';
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const { getProductById, getRelatedProducts } = useProducts();
+  const { getRelatedProducts } = useProducts();
   const { addToCart } = useCart();
 
-  const product = getProductById(parseInt(id));
-  const [selectedColor, setSelectedColor] = useState(product?.colors[0] || '');
-  const [selectedSize, setSelectedSize] = useState(product?.sizes[0] || '');
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  const [selectedColor, setSelectedColor] = useState('');
+  const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
-  const [mainImage, setMainImage] = useState(product?.image || '');
-  const relatedProducts = product ? getRelatedProducts(product.id, product.category) : [];
+  const [mainImage, setMainImage] = useState('');
 
-  if (!product) {
+  useEffect(() => {
+    const loadProduct = async () => {
+      if (!id) return;
+      try {
+        setLoading(true);
+        // API call is made directly here
+        const response = await axios.get(`http://localhost:5000/api/product/${id}`);
+        const fetchedProduct = response.data;
+        setProduct(fetchedProduct);
+        
+        // Set initial selections from the fetched product
+        if (fetchedProduct.images?.length > 0) setMainImage(fetchedProduct.images[0]);
+        if (fetchedProduct.colors?.length > 0) setSelectedColor(fetchedProduct.colors[0]);
+        if (fetchedProduct.size?.length > 0) setSelectedSize(fetchedProduct.size[0]);
+        
+      } catch (err) {
+        setError('Product not found or an error occurred.');
+        console.error("API Error in ProductDetail:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProduct();
+  }, [id]);
+
+  const relatedProducts = product ? getRelatedProducts(product._id, product.category) : [];
+
+  const handleAddToCart = () => {
+    if (product) {
+      addToCart(product, quantity, selectedSize, selectedColor);
+    }
+  };
+  
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[80vh]">
+        <FiLoader className="animate-spin text-5xl text-blue-600" />
+      </div>
+    );
+  }
+
+  if (error || !product) {
     return (
       <div className="bg-gray-50 min-h-screen py-12">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold mb-4">Product not found</h2>
-          <p className="text-gray-600">
-            The product you're looking for doesn't exist or has been removed.
-          </p>
+          <h2 className="text-2xl font-bold mb-4 text-red-600">{error || 'Product not found'}</h2>
+          <p className="text-gray-600">The product you're looking for doesn't exist.</p>
+          <Link to="/products" className="mt-6 inline-block bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
+            Back to All Products
+          </Link>
         </div>
       </div>
     );
   }
 
-  const handleAddToCart = () => {
-    addToCart(product, quantity, selectedSize, selectedColor);
-  };
-
   return (
     <div className="bg-gray-50 min-h-screen py-8">
       <div className="container mx-auto px-4">
-        <a href="/products" className="flex items-center text-blue-600 mb-4 hover:underline">
+        <Link to="/products" className="flex items-center text-blue-600 mb-4 hover:underline">
           <FiChevronLeft className="mr-1" /> Back to Products
-        </a>
+        </Link>
 
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6">
@@ -47,12 +88,12 @@ const ProductDetail = () => {
               <div className="mb-4 h-96 bg-gray-100 rounded-lg overflow-hidden">
                 <img 
                   src={mainImage} 
-                  alt={product.name} 
+                  alt={product.title} 
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="grid grid-cols-4 gap-2">
-                {[product.image, ...(product.additionalImages || [])].map((img, index) => (
+                {product.images.map((img, index) => (
                   <button
                     key={index}
                     className={`h-20 bg-gray-100 rounded-md overflow-hidden ${
@@ -62,7 +103,7 @@ const ProductDetail = () => {
                   >
                     <img
                       src={img}
-                      alt={`${product.name} ${index + 1}`}
+                      alt={`${product.title} thumbnail ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                   </button>
@@ -72,38 +113,23 @@ const ProductDetail = () => {
 
             {/* Product Info */}
             <div>
-              <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
-              <div className="flex items-center mb-4">
-                <div className="flex text-yellow-400 mr-2">
-                  {[...Array(5)].map((_, i) => (
-                    <FiStar
-                      key={i}
-                      fill={i < Math.floor(product.rating) ? 'currentColor' : 'none'}
-                    />
-                  ))}
-                </div>
-                <span className="text-gray-500">
-                  {product.rating.toFixed(1)} ({product.reviews} reviews)
-                </span>
-              </div>
-
+              <h1 className="text-3xl font-bold mb-2">{product.title}</h1>
               <p className="text-2xl font-bold text-gray-900 mb-6">
-                ${product.price.toFixed(2)}
+                ₹{product.price.toFixed(2)}
               </p>
-
               <p className="text-gray-700 mb-8">{product.description}</p>
 
-              {/* Color */}
+              {/* Colors */}
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-900 mb-2">Color</h3>
+                <h3 className="text-sm font-medium text-gray-900 mb-2">Color: <span className="font-bold capitalize">{selectedColor}</span></h3>
                 <div className="flex space-x-2">
                   {product.colors.map(color => (
                     <button
                       key={color}
-                      className={`w-8 h-8 rounded-full border-2 ${
-                        selectedColor === color ? 'border-blue-600' : 'border-transparent'
+                      className={`w-8 h-8 rounded-full border-2 capitalize ${
+                        selectedColor === color ? 'ring-2 ring-offset-2 ring-blue-600' : 'border-gray-300'
                       }`}
-                      style={{ backgroundColor: color }}
+                      style={{ backgroundColor: color.toLowerCase() }}
                       onClick={() => setSelectedColor(color)}
                       title={color}
                     />
@@ -111,21 +137,21 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              {/* Size */}
+              {/* Sizes */}
               <div className="mb-6">
                 <h3 className="text-sm font-medium text-gray-900 mb-2">Size</h3>
                 <div className="flex flex-wrap gap-2">
-                  {product.sizes.map(size => (
+                  {product.size.map(s => (
                     <button
-                      key={size}
+                      key={s}
                       className={`px-4 py-2 border rounded-md ${
-                        selectedSize === size
+                        selectedSize === s
                           ? 'bg-blue-600 text-white border-blue-600'
                           : 'border-gray-300 text-gray-800'
                       }`}
-                      onClick={() => setSelectedSize(size)}
+                      onClick={() => setSelectedSize(s)}
                     >
-                      {size}
+                      {s}
                     </button>
                   ))}
                 </div>
@@ -173,8 +199,8 @@ const ProductDetail = () => {
           <div className="mt-16">
             <h2 className="text-2xl font-bold mb-8">You may also like</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {relatedProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
+              {relatedProducts.map(p => (
+                <ProductCard key={p._id} product={p} />
               ))}
             </div>
           </div>
