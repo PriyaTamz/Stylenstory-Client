@@ -1,39 +1,62 @@
-import { createContext, useContext, useState } from 'react';
-import { toast } from 'react-toastify';
+import { createContext, useContext, useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import axios from "axios";
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
-  // const [cartOpen, setCartOpen] = useState(false); // <-- REMOVE THIS STATE
 
   const addToCart = (product, quantity = 1, size, color) => {
-    setCart(prevCart => {
+    setCart((prevCart) => {
       const existingItem = prevCart.find(
-        item => item._id === product._id && item.size === size && item.color === color
+        (item) =>
+          item._id === product._id && item.size === size && item.color === color
       );
 
       if (existingItem) {
-        return prevCart.map(item =>
+        return prevCart.map((item) =>
           item._id === product._id && item.size === size && item.color === color
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
-      
+
       return [...prevCart, { ...product, quantity, size, color }];
     });
     toast.success(`${product.title} added to cart!`);
     // setCartOpen(true); // <-- REMOVE THIS
   };
 
-  const removeFromCart = (productId, size, color) => {
-    setCart(prevCart =>
-      prevCart.filter(
-        item => !(item._id === productId && item.size === size && item.color === color)
-      )
-    );
-    toast.error("Item removed from cart.");
+  const removeFromCart = async (productId, size, color) => {
+    try {
+      // ✅ Use POST instead of DELETE and send body
+      await axios.post(
+        "http://localhost:5000/api/cart/remove",
+        { productId, size },
+        { withCredentials: true }
+      );
+
+      // ✅ Update local state
+      setCart((prevCart) =>
+        prevCart.filter(
+          (item) =>
+            !(
+              item._id === productId &&
+              item.size === size &&
+              item.color === color
+            )
+        )
+      );
+
+      toast.error("Item removed from cart.");
+    } catch (error) {
+      console.error(
+        "Failed to remove item:",
+        error.response?.data || error.message
+      );
+      toast.error("Failed to remove item from server.");
+    }
   };
 
   const updateQuantity = (productId, size, color, newQuantity) => {
@@ -42,8 +65,8 @@ export const CartProvider = ({ children }) => {
       return;
     }
 
-    setCart(prevCart =>
-      prevCart.map(item =>
+    setCart((prevCart) =>
+      prevCart.map((item) =>
         item._id === productId && item.size === size && item.color === color
           ? { ...item, quantity: newQuantity }
           : item
@@ -56,10 +79,7 @@ export const CartProvider = ({ children }) => {
     0
   );
 
-  const cartCount = cart.reduce(
-    (count, item) => count + item.quantity,
-    0
-  );
+  const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
 
   return (
     <CartContext.Provider
