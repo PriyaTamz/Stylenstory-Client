@@ -2,6 +2,7 @@ import { FiShoppingCart, FiTrash2, FiChevronRight } from 'react-icons/fi';
 import { useCart } from '../context/CartContext';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 const CartPage = () => {
   const {

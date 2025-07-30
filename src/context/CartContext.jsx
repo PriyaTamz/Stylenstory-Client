@@ -7,25 +7,55 @@ const CartContext = createContext();
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
 
+  useEffect(() => {
+    const fetchCart = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/cart", {
+          withCredentials: true,
+        });
+
+        //console.log("Fetched cart from server:", response.data);
+
+        const rawCart = response.data.items || []; // safely get array
+        const cartItems = rawCart.map((item) => ({
+          ...item.product,
+          quantity: item.quantity,
+          size: item.size,
+          color: item.color,
+          _id: item.product._id,
+        }));
+
+        setCart(cartItems);
+      } catch (error) {
+        console.error("Failed to fetch cart:", error);
+        toast.error("Failed to load cart from server.");
+      }
+    };
+
+    fetchCart();
+  }, []);
+
   const addToCart = (product, quantity = 1, size, color) => {
     setCart((prevCart) => {
-      const existingItem = prevCart.find(
+      const validCart = Array.isArray(prevCart) ? prevCart : [];
+
+      const existingItem = validCart.find(
         (item) =>
           item._id === product._id && item.size === size && item.color === color
       );
 
       if (existingItem) {
-        return prevCart.map((item) =>
+        return validCart.map((item) =>
           item._id === product._id && item.size === size && item.color === color
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
 
-      return [...prevCart, { ...product, quantity, size, color }];
+      return [...validCart, { ...product, quantity, size, color }];
     });
+
     toast.success(`${product.title} added to cart!`);
-    // setCartOpen(true); // <-- REMOVE THIS
   };
 
   const removeFromCart = async (productId, size, color) => {
@@ -59,27 +89,43 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const updateQuantity = (productId, size, color, newQuantity) => {
+  const updateQuantity = async (productId, size, color, newQuantity) => {
     if (newQuantity < 1) {
       removeFromCart(productId, size, color);
       return;
     }
 
-    setCart((prevCart) =>
-      prevCart.map((item) =>
-        item._id === productId && item.size === size && item.color === color
-          ? { ...item, quantity: newQuantity }
-          : item
-      )
-    );
+    try {
+      // 1. Send request to backend
+      await axios.put(
+        "http://localhost:5000/api/cart/update",
+        { productId, size, color, quantity: newQuantity },
+        { withCredentials: true }
+      );
+
+      // 2. Update local cart state
+      setCart((prevCart) =>
+        prevCart.map((item) =>
+          item._id === productId && item.size === size && item.color === color
+            ? { ...item, quantity: newQuantity }
+            : item
+        )
+      );
+
+      toast.success("Quantity updated successfully");
+    } catch (error) {
+      console.error("Failed to update quantity:", error);
+      toast.error("Failed to update quantity");
+    }
   };
 
-  const cartTotal = cart.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
+  const cartTotal = Array.isArray(cart)
+    ? cart.reduce((total, item) => total + item.price * item.quantity, 0)
+    : 0;
 
-  const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
+  const cartCount = Array.isArray(cart)
+    ? cart.reduce((count, item) => count + item.quantity, 0)
+    : 0;
 
   return (
     <CartContext.Provider
