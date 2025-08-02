@@ -24,6 +24,8 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [mainImage, setMainImage] = useState("");
 
+  const [isAdding, setIsAdding] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -60,39 +62,15 @@ const ProductDetail = () => {
     : [];
 
   const handleAddToCart = async () => {
-    if (!product) return;
+    if (!product || isAdding) return;
 
-    // 1. Update cart in context
-    addToCart(product, quantity, selectedSize, selectedColor);
+    setIsAdding(true);
 
     // 2. Optionally sync with backend
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/cart/add",
-        {
-          productId: product._id,
-          quantity,
-          size: selectedSize,
-          color: selectedColor,
-        },
-        {
-          withCredentials: true,
-        }
-      );
-
-      console.log("Cart updated:", response.data);
-    } catch (error) {
-      const status = error.response?.status;
-
-      if (status === 401 || status === 403) {
-        console.warn("Unauthorized. Redirecting to login.");
-        navigate("/auth");
-      } else {
-        console.error(
-          "Add to cart failed:",
-          error.response?.data || error.message
-        );
-      }
+      await addToCart(product, quantity, selectedSize, selectedColor);
+    } finally {
+      setIsAdding(false);
     }
   };
 

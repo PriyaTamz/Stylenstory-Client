@@ -28,26 +28,7 @@ const RazorpayPayment = ({
       return;
     }
 
-    if (paymentMethod === "cod") {
-      try {
-        const res = await axios.post(
-          "http://localhost:5000/api/order/checkout",
-          {
-            addressId,
-            method: "cod",
-          },
-          { withCredentials: true }
-        );
-        alert("✅ Order placed successfully with COD!");
-        console.log("Order:", res.data);
-
-        // ✅ Redirect to orders
-        navigate("/orders");
-      } catch (err) {
-        alert("❌ Failed to place COD order");
-        console.error(err);
-      }
-    } else if (paymentMethod === "upi") {
+    if (paymentMethod === "upi") {
       const isLoaded = await loadRazorpayScript();
       if (!isLoaded) {
         alert("Failed to load Razorpay SDK");
@@ -138,28 +119,6 @@ const RazorpayPayment = ({
         </div>
         <div className="w-5 h-5 rounded-full border-2 border-[#4f46e5] flex items-center justify-center">
           {paymentMethod === "upi" && (
-            <div className="w-3 h-3 rounded-full bg-[#4f46e5]" />
-          )}
-        </div>
-      </div>
-
-      {/* COD Option */}
-      <div
-        onClick={() => setPaymentMethod("cod")}
-        className={`flex items-center justify-between p-4 border rounded-lg mb-3 cursor-pointer ${
-          paymentMethod === "cod" ? "border-[#4f46e5]" : "border-[#e5e7eb]"
-        }`}
-      >
-        <div className="flex items-center">
-          <img
-            src="https://cdn-icons-png.flaticon.com/512/2838/2838912.png"
-            alt="Cash on Delivery"
-            className="h-8 mr-3"
-          />
-          <span className="font-medium">Cash on Delivery (COD)</span>
-        </div>
-        <div className="w-5 h-5 rounded-full border-2 border-[#4f46e5] flex items-center justify-center">
-          {paymentMethod === "cod" && (
             <div className="w-3 h-3 rounded-full bg-[#4f46e5]" />
           )}
         </div>

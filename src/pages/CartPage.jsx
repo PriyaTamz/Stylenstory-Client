@@ -1,21 +1,35 @@
-import { FiShoppingCart, FiTrash2, FiChevronRight } from "react-icons/fi";
-import { useCart } from "../context/CartContext";
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
+import {
+  FiShoppingCart,
+  FiTrash2,
+  FiChevronRight,
+  FiPlus,
+} from "react-icons/fi";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import ShippingForm from "../components/ShippingForm.jsx";
+import ShippingForm from "../components/ui/ShippingForm.jsx";
 import RazorpayPayment from "../components/RazorpayPayment.jsx";
+import { toast } from "react-toastify";
+import { useCart } from "../context/CartContext";
+import { useAddress } from "../context/AddressContext";
 
 const CartPage = () => {
   const { cart, cartTotal, cartCount, removeFromCart, updateQuantity } =
     useCart();
+  const {
+    addressList,
+    selectedAddressId,
+    loading,
+    addAddress,
+    deleteAddress,
+    selectAddress,
+  } = useAddress();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedAddressId, setSelectedAddressId] = useState(null);
-  const [addressList, setAddressList] = useState([]);
-  const [checkoutStep, setCheckoutStep] = useState("cart"); // 'cart', 'shipping', 'payment'
-  const [shippingInfo, setShippingInfo] = useState({
-    type: "work", // or 'home'
+  const [checkoutStep, setCheckoutStep] = useState("cart");
+
+  const initialFormState = {
+    type: "home",
     fullName: "",
     address: "",
     city: "",
@@ -23,107 +37,58 @@ const CartPage = () => {
     pincode: "",
     phone: "",
     isDefault: false,
-  });
-
-  const resetForm = () => {
-    setShippingInfo({
-      type: "",
-      fullName: "",
-      address: "",
-      city: "",
-      state: "",
-      pincode: "",
-      phone: "",
-    });
   };
-
-  useEffect(() => {
-    if (isModalOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-  }, [isModalOpen]);
-
-  useEffect(() => {
-    if (checkoutStep === "shipping") {
-      console.log("📦 Entering shipping step, fetching address...");
-
-      const fetchAddress = async () => {
-        try {
-          const response = await axios.get(
-            "http://localhost:5000/api/address",
-            {
-              withCredentials: true,
-            }
-          );
-
-          console.log("✅ Address API response:", response.data);
-
-          const addressData = response.data.addresses;
-          setAddressList(addressData);
-
-          if (Array.isArray(addressData) && addressData.length > 0) {
-            const defaultAddress =
-              addressData.find((addr) => addr.isDefault) || addressData[0];
-
-            setShippingInfo({
-              fullName: defaultAddress.fullName || "",
-              address: defaultAddress.address,
-              city: defaultAddress.city,
-              state: defaultAddress.state,
-              pincode: defaultAddress.pincode,
-              phone: defaultAddress.phone,
-              isDefault: defaultAddress.isDefault,
-              type: defaultAddress.type || "home",
-            });
-          } else {
-            console.warn("📭 No addresses found");
-          }
-        } catch (error) {
-          console.error("❌ Failed to fetch address:", error);
-        }
-      };
-
-      fetchAddress();
-    }
-  }, [checkoutStep]);
-
-  const handleCheckout = () => {
-    alert(`Simulating payment of ₹${cartTotal.toFixed(2)}...`);
-  };
+  const [shippingInfo, setShippingInfo] = useState(initialFormState);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setShippingInfo((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
+  /*
+  const handleSaveAddress = async () => {
+    const requiredFields = ['type', 'fullName', 'address', 'city', 'state', 'pincode', 'phone'];
+    for (const field of requiredFields) {
+      if (!shippingInfo[field] || String(shippingInfo[field]).trim() === '') {
+        toast.error(`Please fill out the '${field}' field.`);
+        return;
+      }
+    }
+    const success = await addAddress(shippingInfo);
+    if (success) {
+      setIsModalOpen(false);
+      setShippingInfo(initialFormState);
+    }
+  };*/
+
+  const handleOpenModal = () => {
+    setShippingInfo(initialFormState);
+    setIsModalOpen(true);
+  };
+
   const CartItem = ({ item }) => (
-    <li className="py-6 flex items-center gap-4 border-b border-[#e5e7eb]">
-      <div className="w-28 h-28 flex-shrink-0 border rounded-md overflow-hidden shadow-sm">
-        <img
-          src={item.images[0]}
-          alt={item.title}
-          className="w-full h-full object-cover object-center"
-        />
-      </div>
-      <div className="flex-1">
-        <div className="flex justify-between items-start">
-          <h3 className="text-lg font-semibold text-[#111827]">{item.title}</h3>
-          <p className="text-md font-medium text-[#1f2937]">
-            ₹{(item.price * item.quantity).toFixed(2)}
+    <li className="py-6 flex gap-4">
+      <img
+        src={item.images[0]}
+        alt={item.title}
+        className="w-24 h-24 rounded-md object-cover flex-shrink-0"
+      />
+      <div className="flex-1 flex flex-col">
+        <div>
+          <div className="flex justify-between text-base font-medium text-gray-900">
+            <h3>{item.title}</h3>
+            <p>₹{(item.price * item.quantity).toFixed(2)}</p>
+          </div>
+          <p className="mt-1 text-sm text-gray-500 capitalize">
+            {item.color} / {item.size}
           </p>
         </div>
-        <p className="text-sm text-[#6b7280] mt-1 capitalize">
-          {item.color} / {item.size}
-        </p>
-        <div className="mt-3 flex justify-between items-center">
-          <div className="flex items-center border rounded-md overflow-hidden text-sm">
+        <div className="flex flex-1 items-end justify-between text-sm">
+          <div className="flex items-center border rounded-md">
             <button
-              className="px-3 py-1 bg-[#f3f4f6] text-[#374151] hover:bg-[#e5e7eb]"
               onClick={() =>
                 updateQuantity(
                   item._id,
@@ -132,12 +97,12 @@ const CartPage = () => {
                   item.quantity - 1
                 )
               }
+              className="px-3 py-1 text-gray-600 hover:bg-gray-100"
             >
               -
             </button>
             <span className="px-4 font-medium">{item.quantity}</span>
             <button
-              className="px-3 py-1 bg-[#f3f4f6] text-[#374151] hover:bg-[#e5e7eb]"
               onClick={() =>
                 updateQuantity(
                   item._id,
@@ -146,16 +111,16 @@ const CartPage = () => {
                   item.quantity + 1
                 )
               }
+              className="px-3 py-1 text-gray-600 hover:bg-gray-100"
             >
               +
             </button>
           </div>
           <button
-            className="text-[#ef4444] hover:text-[#dc2626] flex items-center text-sm"
             onClick={() => removeFromCart(item._id, item.size, item.color)}
+            className="font-medium text-indigo-600 hover:text-indigo-500 flex items-center gap-1"
           >
-            <FiTrash2 className="mr-1" />
-            Remove
+            <FiTrash2 /> Remove
           </button>
         </div>
       </div>
@@ -306,104 +271,115 @@ const CartPage = () => {
     );
   };
 
+  const CartSummary = () => (
+    <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200 h-fit">
+      <h3 className="text-lg font-semibold mb-4 border-b pb-3">
+        Order Summary
+      </h3>
+      <div className="space-y-2 text-sm">
+        <div className="flex justify-between">
+          <span className="text-gray-600">Subtotal</span>
+          <span>₹{cartTotal.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-gray-600">Shipping</span>
+          <span className="font-medium text-green-600">FREE</span>
+        </div>
+        <div className="flex justify-between border-t pt-2 mt-2 text-base font-bold">
+          <span>Total</span>
+          <span>₹{cartTotal.toFixed(2)}</span>
+        </div>
+      </div>
+      {checkoutStep === "cart" && (
+        <button
+          onClick={() => setCheckoutStep("shipping")}
+          className="mt-6 w-full bg-indigo-600 text-white py-3 rounded-md font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+        >
+          Proceed to Checkout <FiChevronRight />
+        </button>
+      )}
+    </div>
+  );
+
+  const CheckoutStepper = () => (
+    <div className="flex items-center justify-center mb-10">
+      {["Cart", "Shipping", "Payment"].map((step, index) => {
+        const stepKey = step.toLowerCase();
+        const isActive =
+          checkoutStep === stepKey ||
+          (checkoutStep === "shipping" && index === 0) ||
+          (checkoutStep === "payment" && index < 2);
+        const isCurrent = checkoutStep === stepKey;
+        return (
+          <React.Fragment key={step}>
+            <div
+              className={`flex items-center ${
+                isActive ? "text-indigo-600" : "text-gray-500"
+              }`}
+            >
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                  isActive
+                    ? "bg-indigo-600 text-white"
+                    : "bg-gray-200 text-gray-600"
+                }`}
+              >
+                {index + 1}
+              </div>
+              <span
+                className={`ml-3 font-medium ${
+                  isCurrent ? "text-gray-900" : ""
+                }`}
+              >
+                {step}
+              </span>
+            </div>
+            {index < 2 && (
+              <div
+                className={`flex-auto border-t-2 mx-4 ${
+                  isActive ? "border-indigo-600" : "border-gray-200"
+                }`}
+              ></div>
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+
+  if (cartCount === 0) {
+    return (
+      <div className="text-center py-20 bg-white rounded-lg shadow-sm max-w-2xl mx-auto my-10">
+        <FiShoppingCart size={64} className="mx-auto text-gray-300" />
+        <h3 className="mt-4 text-2xl font-semibold text-gray-800">
+          Your cart is empty
+        </h3>
+        <p className="text-gray-500 mt-2">
+          Looks like you haven't added anything yet.
+        </p>
+        <Link
+          to="/products"
+          className="mt-6 inline-block bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition"
+        >
+          Continue Shopping
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-50 min-h-screen">
-      <div className="max-w-5xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold text-[#111827]">
-            {checkoutStep === "cart" && "Shopping Cart"}
-            {checkoutStep === "shipping" && "Shipping Information"}
-            {checkoutStep === "payment" && "Payment Method"}
-          </h2>
-        </div>
-        <div className="mb-8">
-          <div className="flex items-center justify-center">
-            <div
-              className={`flex items-center ${
-                checkoutStep !== "cart" ? "text-[#4f46e5]" : "text-[#6b7280]"
-              }`}
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  checkoutStep === "cart"
-                    ? "bg-[#e5e7eb]"
-                    : "bg-[#4f46e5] text-white"
-                }`}
-              >
-                1
-              </div>
-              <span className="ml-2">Cart</span>
-            </div>
-            <div
-              className={`w-16 h-0.5 mx-2 ${
-                checkoutStep !== "cart" ? "bg-[#4f46e5]" : "bg-[#e5e7eb]"
-              }`}
-            ></div>
-            <div
-              className={`flex items-center ${
-                checkoutStep === "payment"
-                  ? "text-[#4f46e5]"
-                  : checkoutStep === "shipping"
-                  ? "text-[#4f46e5]"
-                  : "text-[#6b7280]"
-              }`}
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  checkoutStep === "shipping" || checkoutStep === "payment"
-                    ? "bg-[#4f46e5] text-white"
-                    : "bg-[#e5e7eb]"
-                }`}
-              >
-                2
-              </div>
-              <span className="ml-2">Shipping</span>
-            </div>
-            <div
-              className={`w-16 h-0.5 mx-2 ${
-                checkoutStep === "payment" ? "bg-[#4f46e5]" : "bg-[#e5e7eb]"
-              }`}
-            ></div>
-            <div
-              className={`flex items-center ${
-                checkoutStep === "payment" ? "text-[#4f46e5]" : "text-[#6b7280]"
-              }`}
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  checkoutStep === "payment"
-                    ? "bg-[#4f46e5] text-white"
-                    : "bg-[#e5e7eb]"
-                }`}
-              >
-                3
-              </div>
-              <span className="ml-2">Payment</span>
-            </div>
-          </div>
-        </div>
+      <div className="max-w-7xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
+        <CheckoutStepper />
 
-        {cartCount === 0 ? (
-          <div className="text-center py-20 bg-white rounded-lg shadow-sm">
-            <FiShoppingCart size={64} className="mx-auto text-gray-300" />
-            <h3 className="mt-4 text-2xl font-semibold text-[#1f2937]">
-              Your cart is empty
-            </h3>
-            <p className="text-[#6b7280] mt-2">
-              Looks like you haven't added anything yet.
-            </p>
-            <Link
-              to="/products"
-              className="mt-6 inline-block bg-[#4f46e5] text-white px-6 py-2 rounded-md hover:bg-[#4338ca] transition"
-            >
-              Continue Shopping
-            </Link>
-          </div>
-        ) : (
-          <>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
             {checkoutStep === "cart" && (
-              <>
-                <ul className="divide-y divide-[#e5e7eb] bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h2 className="text-2xl font-bold mb-4">
+                  Shopping Cart ({cartCount} items)
+                </h2>
+                <ul className="divide-y divide-gray-200">
                   {cart.map((item) => (
                     <CartItem
                       key={`${item._id}-${item.size}-${item.color}`}
@@ -411,54 +387,96 @@ const CartPage = () => {
                     />
                   ))}
                 </ul>
-                <div className="mt-10 border-t border-[#e5e7eb] pt-6">
-                  <div className="flex justify-between text-xl font-semibold text-[#111827] mb-4">
-                    <span>Subtotal</span>
-                    <span>₹{cartTotal.toFixed(2)}</span>
-                  </div>
-                  <p className="text-sm text-[#6b7280]">
-                    Shipping and taxes calculated at checkout.
-                  </p>
-                  <div className="mt-6 flex flex-col sm:flex-row sm:justify-between gap-4">
-                    <button
-                      onClick={() => setCheckoutStep("shipping")}
-                      className="w-full sm:w-auto bg-[#4f46e5] hover:bg-[#4338ca] text-white px-6 py-3 rounded-md text-base font-medium transition flex items-center justify-center"
-                    >
-                      Proceed to Checkout <FiChevronRight className="ml-1" />
-                    </button>
-                    <Link
-                      to="/products"
-                      className="w-full sm:w-auto text-center py-3 text-[#4f46e5] hover:text-[#4338ca] text-base font-medium transition"
-                    >
-                      Continue Shopping &rarr;
-                    </Link>
-                  </div>
-                </div>
-              </>
+              </div>
             )}
+
             {checkoutStep === "shipping" && (
-              <div className="flex flex-col md:flex-row gap-6">
-                {/* Left: Saved addresses and Add button */}
-                <div className="w-full md:w-1/2">
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold">Shipping Address</h2>
                   <button
-                    onClick={() => {
-                      resetForm();
-                      setIsModalOpen(true);
-                    }}
-                    className="mb-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium"
+                    onClick={handleOpenModal}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700"
                   >
-                    + Add New Address
+                    <FiPlus /> Add New Address
                   </button>
-
-                  <SavedAddresses />
                 </div>
-
-                {/* Right: Cart summary (you can also move this if needed) */}
-                <div className="w-full md:w-1/2">
-                  {/* Right-side content or leave empty */}
+                {loading && (
+                  <p className="text-center text-gray-500 py-8">
+                    Loading addresses...
+                  </p>
+                )}
+                {!loading && addressList.length > 0 ? (
+                  <ul className="space-y-4">
+                    {addressList.map((addr) => (
+                      <li
+                        key={addr._id}
+                        onClick={() => selectAddress(addr._id)}
+                        className={`p-4 border rounded-lg cursor-pointer transition ${
+                          selectedAddressId === addr._id
+                            ? "border-indigo-500 ring-2 ring-indigo-200"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="radio"
+                              name="selectedAddress"
+                              checked={selectedAddressId === addr._id}
+                              onChange={() => selectAddress(addr._id)}
+                              className="h-5 w-5 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <div>
+                              <p className="font-semibold capitalize">
+                                {addr.type}{" "}
+                                {addr.isDefault && (
+                                  <span className="text-xs font-normal bg-green-100 text-green-700 px-2 py-0.5 rounded-full ml-2">
+                                    Default
+                                  </span>
+                                )}
+                              </p>
+                              <p className="text-gray-700 mt-1">
+                                {addr.fullName}, {addr.address}, {addr.city},{" "}
+                                {addr.state} - {addr.pincode}
+                              </p>
+                              <p className="text-gray-500 text-sm">
+                                Phone: {addr.phone}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteAddress(addr._id);
+                            }}
+                            className="text-red-500 text-sm hover:underline"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  !loading && (
+                    <p className="text-center text-gray-500 py-8">
+                      No saved addresses. Please add a new one.
+                    </p>
+                  )
+                )}
+                <div className="mt-8 border-t pt-6 flex justify-end">
+                  <button
+                    onClick={() => setCheckoutStep("payment")}
+                    disabled={!selectedAddressId || loading}
+                    className="w-full sm:w-auto bg-indigo-600 text-white py-3 px-8 rounded-md font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Continue to Payment <FiChevronRight />
+                  </button>
                 </div>
               </div>
             )}
+
             {checkoutStep === "payment" && (
               <RazorpayPayment
                 cartTotal={cartTotal}
@@ -467,34 +485,27 @@ const CartPage = () => {
                 userInfo={shippingInfo}
               />
             )}
-          </>
-        )}
-
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] max-w-lg relative">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-xl font-bold"
-              >
-                &times;
-              </button>
-
-              <h2 className="text-lg font-semibold mb-4">Add New Address</h2>
-
-              <ShippingForm
-                shippingInfo={shippingInfo}
-                handleInputChange={handleInputChange}
-                handleSaveAddress={(e) => {
-                  handleSaveAddress(e);
-                  setIsModalOpen(false);
-                }}
-                setCheckoutStep={setCheckoutStep}
-              />
-            </div>
           </div>
-        )}
+
+          <div className="lg:col-span-1">
+            <CartSummary />
+          </div>
+        </div>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-[90%] max-w-lg relative">
+            <h2 className="text-xl font-bold mb-4">Add a New Address</h2>
+            <ShippingForm
+              shippingInfo={shippingInfo}
+              handleInputChange={handleInputChange}
+              handleSave={handleSaveAddress}
+              closeModal={() => setIsModalOpen(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

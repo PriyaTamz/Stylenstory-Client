@@ -114,32 +114,6 @@ const OrdersPage = () => {
                     ? "Hide Details"
                     : "View Details"}
                 </button>
-
-                {/* Show "Request Return" if any item is eligible */}
-                {order.cartItems.some((item) => {
-                  const diff =
-                    (new Date() - new Date(order.createdAt)) /
-                    (1000 * 60 * 60 * 24);
-                  return diff <= 7 && !item.returnRequested;
-                }) && (
-                  <button
-                    onClick={() => {
-                      const eligibleItem = order.cartItems.find((item) => {
-                        const diff =
-                          (new Date() - new Date(order.createdAt)) /
-                          (1000 * 60 * 60 * 24);
-                        return diff <= 7 && !item.returnRequested;
-                      });
-
-                      if (eligibleItem) {
-                        handleReturn(order._id, eligibleItem.productId._id);
-                      }
-                    }}
-                    className="text-sm text-white bg-pink-600 px-3 py-1 rounded hover:bg-pink-700"
-                  >
-                    Request Return
-                  </button>
-                )}
               </div>
             </div>
 
@@ -148,7 +122,7 @@ const OrdersPage = () => {
               {(order.cartItems || []).map((item, index) => (
                 <div
                   key={item._id || index}
-                  className="flex items-center gap-4 border p-3 rounded-md"
+                  className="flex flex-col sm:flex-row items-start sm:items-center gap-4 border p-3 rounded-md"
                 >
                   <img
                     src={item.productId?.image}
@@ -162,6 +136,31 @@ const OrdersPage = () => {
                     <p className="text-sm text-gray-500">
                       Qty: {item.quantity} | Size: {item.size}
                     </p>
+
+                    {(() => {
+                      const diff =
+                        (new Date() - new Date(order.createdAt)) /
+                        (1000 * 60 * 60 * 24);
+                      if (diff <= 7 && !item.returnRequested) {
+                        return (
+                          <button
+                            onClick={() =>
+                              handleReturn(order._id, item.productId._id)
+                            }
+                            className="text-sm text-white bg-pink-600 px-3 py-1 rounded hover:bg-pink-700 mt-2"
+                          >
+                            Request Return
+                          </button>
+                        );
+                      } else if (item.returnRequested) {
+                        return (
+                          <p className="text-sm text-green-600 mt-2 font-medium">
+                            Return already requested
+                          </p>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                 </div>
               ))}
@@ -197,7 +196,8 @@ const OrdersPage = () => {
 
                 {order.status === "Refunded" && (
                   <p className="text-sm mt-2 text-green-600 font-medium">
-                    Refund Initialized — You can expect the amount within 3 to 5 working days.
+                    Refund Initialized — You can expect the amount within 3 to 5
+                    working days.
                   </p>
                 )}
 
