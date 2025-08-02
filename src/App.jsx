@@ -37,17 +37,17 @@ const Layout = () => {
 const App = () => {
   return (
     <Router>
-      <ProductProvider>
-        <CartProvider>
-          <AuthProvider>
+      <AuthProvider>
+        <ProductProvider>
+          <CartProvider>
             <AdminAuthProvider>
               <AddressProvider> 
                 <Layout />
               </AddressProvider>
             </AdminAuthProvider>
-          </AuthProvider>
-        </CartProvider>
-      </ProductProvider>
+          </CartProvider>
+        </ProductProvider>
+      </AuthProvider>
     </Router>
   );
 };
