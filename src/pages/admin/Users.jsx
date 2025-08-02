@@ -1,21 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import UserTable from '../../components/admin/UserTable';
 
 const Users = () => {
-  // Mock user data
-  const [users, setUsers] = useState([
-    { id: 1, name: 'John Doe', email: 'john@example.com', phone: '(123) 456-7890', role: 'Customer', address: { street: '123 Main St', city: 'New York', state: 'NY', zip: '10001' }, avatar: 'https://randomuser.me/api/portraits/men/1.jpg' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', phone: '(234) 567-8901', role: 'Customer', address: { street: '456 Oak Ave', city: 'Los Angeles', state: 'CA', zip: '90001' }, avatar: 'https://randomuser.me/api/portraits/women/1.jpg' },
-    { id: 3, name: 'Robert Johnson', email: 'robert@example.com', phone: '(345) 678-9012', role: 'Admin', address: { street: '789 Pine Rd', city: 'Chicago', state: 'IL', zip: '60601' }, avatar: 'https://randomuser.me/api/portraits/men/2.jpg' },
-    { id: 4, name: 'Emily Davis', email: 'emily@example.com', phone: '(456) 789-0123', role: 'Customer', address: { street: '101 Elm St', city: 'Houston', state: 'TX', zip: '77001' }, avatar: 'https://randomuser.me/api/portraits/women/2.jpg' },
-    { id: 5, name: 'Michael Brown', email: 'michael@example.com', phone: '(567) 890-1234', role: 'Customer', address: { street: '202 Maple Dr', city: 'Phoenix', state: 'AZ', zip: '85001' }, avatar: 'https://randomuser.me/api/portraits/men/3.jpg' }
-  ]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleDeleteUser = (userId) => {
-    setUsers(users.filter(u => u.id !== userId));
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/order/admin/all-usersData", {
+        withCredentials: true, // include cookies (if using JWT auth with cookies)
+      });
+
+      if (res.data.success) {
+        const formattedUsers = res.data.users.map((user) => ({
+          id: user._id,
+          name: user?.addresses?.[0]?.fullName || "No Name",
+          email: user.email,
+          phone: user.phone,
+          role: "Customer",
+          address: {
+            street: user?.addresses?.[0]?.address || "-",
+            city: user?.addresses?.[0]?.city || "-",
+            state: user?.addresses?.[0]?.state || "-",
+            zip: user?.addresses?.[0]?.pincode || "-",
+          },
+          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`, // dynamic placeholder
+        }));
+        setUsers(formattedUsers);
+      } else {
+        console.error("Failed to load users:", res.data.message);
+      }
+    } catch (err) {
+      console.error("Error fetching users:", err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return <UserTable users={users} onDelete={handleDeleteUser} />;
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleDeleteUser = (userId) => {
+    if (window.confirm("Are you sure you want to delete this user?")) {
+      setUsers((prevUsers) => prevUsers.filter((u) => u.id !== userId));
+      // You can also add an API call to delete the user here if needed
+    }
+  };
+
+  return (
+    <>
+      {loading ? (
+        <div className="text-center py-10 text-gray-500">Loading users...</div>
+      ) : (
+        <UserTable users={users} onDelete={handleDeleteUser} />
+      )}
+    </>
+  );
 };
 
 export default Users;

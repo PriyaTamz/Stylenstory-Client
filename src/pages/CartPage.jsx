@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import ShippingForm from "../components/ShippingForm.jsx";
+import RazorpayPayment from "../components/RazorpayPayment.jsx";
 
 const CartPage = () => {
   const { cart, cartTotal, cartCount, removeFromCart, updateQuantity } =
@@ -305,58 +306,6 @@ const CartPage = () => {
     );
   };
 
-  const PaymentSection = () => (
-    <div className="mt-6 bg-white p-6 rounded-lg shadow-sm border border-[#e5e7eb]">
-      <h3 className="text-xl font-semibold mb-4">Payment Method</h3>
-      <div className="mb-6">
-        <div className="flex items-center justify-between p-4 border border-[#e5e7eb] rounded-lg mb-3 hover:border-[#4f46e5] cursor-pointer">
-          <div className="flex items-center">
-            <img
-              src="https://cdn.razorpay.com/static/assets/razorpay-glyph.svg"
-              alt="Razorpay"
-              className="h-8 mr-3"
-            />
-            <span className="font-medium">Razorpay</span>
-          </div>
-          <div className="w-5 h-5 rounded-full border-2 border-[#4f46e5] flex items-center justify-center">
-            <div className="w-3 h-3 rounded-full bg-[#4f46e5]"></div>
-          </div>
-        </div>
-        <p className="text-sm text-[#6b7280] mt-2">
-          You'll be redirected to Razorpay's secure payment page.
-        </p>
-      </div>
-      <div className="border-t border-[#e5e7eb] pt-4">
-        <div className="flex justify-between mb-2">
-          <span className="text-[#4b5563]">Subtotal</span>
-          <span className="font-medium">₹{cartTotal.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between mb-2">
-          <span className="text-[#4b5563]">Shipping</span>
-          <span className="font-medium">Free</span>
-        </div>
-        <div className="flex justify-between text-lg font-semibold mt-4 pt-2 border-t border-[#e5e7eb]">
-          <span>Total</span>
-          <span>₹{cartTotal.toFixed(2)}</span>
-        </div>
-      </div>
-      <div className="mt-8 flex justify-between">
-        <button
-          onClick={() => setCheckoutStep("shipping")}
-          className="text-[#4f46e5] hover:text-[#4338ca] flex items-center font-medium"
-        >
-          &larr; Back to Shipping
-        </button>
-        <button
-          onClick={handleCheckout}
-          className="bg-[#4f46e5] hover:bg-[#4338ca] text-white px-6 py-3 rounded-md font-medium flex items-center"
-        >
-          Pay Now ₹{cartTotal.toFixed(2)}
-        </button>
-      </div>
-    </div>
-  );
-
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-5xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
@@ -510,7 +459,14 @@ const CartPage = () => {
                 </div>
               </div>
             )}
-            {checkoutStep === "payment" && <PaymentSection />}
+            {checkoutStep === "payment" && (
+              <RazorpayPayment
+                cartTotal={cartTotal}
+                addressId={selectedAddressId}
+                setCheckoutStep={setCheckoutStep}
+                userInfo={shippingInfo}
+              />
+            )}
           </>
         )}
 

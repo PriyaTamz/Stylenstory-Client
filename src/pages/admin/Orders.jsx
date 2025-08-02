@@ -1,15 +1,57 @@
-import React from 'react';
-import OrderTable from '../../components/admin/OrderTable';
+import React, { useEffect, useState } from "react";
+import OrderTable from "../../components/admin/OrderTable";
+import axios from "axios";
 
 const Orders = () => {
-  // Mock order data
-  const orders = [
-    { id: '12345', customer: { name: 'John Doe', email: 'john@example.com' }, date: '2023-05-15', amount: 59.99, status: 'Completed', items: [{ product: 'Classic White Tee', quantity: 1, price: '24.99' }, { product: 'Black Graphic Tee', quantity: 1, price: '29.99' }] },
-    { id: '12346', customer: { name: 'Jane Smith', email: 'jane@example.com' }, date: '2023-05-14', amount: 79.98, status: 'Shipped', items: [{ product: 'Striped Polo Shirt', quantity: 2, price: '34.99' }] },
-    { id: '12347', customer: { name: 'Robert Johnson', email: 'robert@example.com' }, date: '2023-05-14', amount: 39.99, status: 'Processing', items: [{ product: 'V-Neck Blouse', quantity: 1, price: '39.99' }] },
-    { id: '12348', customer: { name: 'Emily Davis', email: 'emily@example.com' }, date: '2023-05-13', amount: 99.97, status: 'Completed', items: [{ product: 'Kids Cartoon Tee', quantity: 3, price: '19.99' }, { product: 'Classic White Tee', quantity: 1, price: '24.99' }] },
-    { id: '12349', customer: { name: 'Michael Brown', email: 'michael@example.com' }, date: '2023-05-12', amount: 29.99, status: 'Cancelled', items: [{ product: 'Black Graphic Tee', quantity: 1, price: '29.99' }] }
-  ];
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:5000/api/order/admin/orders",
+          {
+            withCredentials: true, // If using cookies/session auth
+          }
+        );
+
+        const formattedOrders = res.data.orders.map((order) => ({
+          id: order._id,
+          customer: {
+            name: order.address.fullName,
+            email: order.user.email,
+          },
+          date: new Date(order.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          }),
+          amount: order.totalAmount,
+          status: order.status || "Paid", // fallback in case status is missing
+          items: order.cartItems.map((item) => ({
+            product: item.productId?.title || "Product",
+            quantity: item.quantity,
+            price: item.productId?.price || 0,
+            returnRequested: item.returnRequested || false,
+            returnReason: item.returnReason || "",
+          })),
+          paymentId: order.razorpayPaymentId, 
+        }));
+
+        setOrders(formattedOrders);
+      } catch (error) {
+        console.error("Error fetching admin orders:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+  
+
+  if (loading) return <p className="p-4">Loading...</p>;
 
   return <OrderTable orders={orders} />;
 };
