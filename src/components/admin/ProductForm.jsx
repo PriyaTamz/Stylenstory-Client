@@ -47,7 +47,7 @@ const ProductForm = ({ product, onCancel }) => {
     formData.size.forEach((s) => data.append("size[]", s));
     formData.colors.forEach((c) => data.append("colors[]", c));
     formData.tags.forEach((t) => data.append("tags[]", t));
-    formData.images.forEach((file) => data.append("files", file));
+    formData.images.forEach((file) => data.append("images", file));
 
     try {
       let response;

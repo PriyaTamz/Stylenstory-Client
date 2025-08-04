@@ -45,6 +45,8 @@ const OrdersPage = () => {
         { withCredentials: true }
       );
 
+      console.log("Fetched orders:", res.data.orders);
+
       alert("Return request sent successfully");
       // Optionally reload orders:
       setOrders((prev) =>
@@ -125,8 +127,8 @@ const OrdersPage = () => {
                   className="flex flex-col sm:flex-row items-start sm:items-center gap-4 border p-3 rounded-md"
                 >
                   <img
-                    src={item.productId?.image}
-                    alt={item.productId?.name}
+                    src={item.productId?.images?.[0]}
+                    alt={item.productId?.title}
                     className="w-16 h-16 object-cover rounded"
                   />
                   <div className="flex-1">

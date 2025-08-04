@@ -48,22 +48,6 @@ const CartPage = () => {
     }));
   };
 
-  /*
-  const handleSaveAddress = async () => {
-    const requiredFields = ['type', 'fullName', 'address', 'city', 'state', 'pincode', 'phone'];
-    for (const field of requiredFields) {
-      if (!shippingInfo[field] || String(shippingInfo[field]).trim() === '') {
-        toast.error(`Please fill out the '${field}' field.`);
-        return;
-      }
-    }
-    const success = await addAddress(shippingInfo);
-    if (success) {
-      setIsModalOpen(false);
-      setShippingInfo(initialFormState);
-    }
-  };*/
-
   const handleOpenModal = () => {
     setShippingInfo(initialFormState);
     setIsModalOpen(true);
