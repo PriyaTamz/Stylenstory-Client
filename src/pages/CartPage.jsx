@@ -8,7 +8,7 @@ import {
 import { Link } from "react-router-dom";
 import axios from "axios";
 import ShippingForm from "../components/ui/ShippingForm.jsx";
-import RazorpayPayment from "../components/RazorpayPayment.jsx";
+import RazorpayPayment from "../components/ui/RazorpayPayment.jsx";
 import { toast } from "react-toastify";
 import { useCart } from "../context/CartContext";
 import { useAddress } from "../context/AddressContext";
