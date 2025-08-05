@@ -14,8 +14,7 @@ import { useCart } from "../context/CartContext";
 import { useAddress } from "../context/AddressContext";
 
 const CartPage = () => {
-  const { cart, cartTotal, cartCount, removeFromCart, updateQuantity } =
-    useCart();
+  const { cart, cartTotal, cartCount, removeFromCart, updateQuantity } = useCart();
   const {
     addressList,
     selectedAddressId,
@@ -113,63 +112,46 @@ const CartPage = () => {
 
   const handleSaveAddress = async () => {
     try {
-      await axios.post("http://localhost:5000/api/address", shippingInfo, {
-        withCredentials: true,
-      });
-      console.log("✅ Address saved successfully");
-
-      // Clear the form after saving
-      setShippingInfo({
-        fullName: "",
-        address: "",
-        city: "",
-        state: "",
-        pincode: "",
-        phone: "",
-        isDefault: false,
-        type: "home", // or default type you want
-      });
-
+      const token = localStorage.getItem("authToken");
+      await axios.post(
+        "http://localhost:5000/api/address", 
+        shippingInfo,
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      toast.success("Address saved successfully");
+      setIsModalOpen(false);
       setCheckoutStep("payment");
     } catch (error) {
-      console.error("❌ Failed to save address:", error);
-      alert("Failed to save address. Please check the form and try again.");
+      console.error("Failed to save address:", error);
+      toast.error("Failed to save address. Please try again.");
     }
   };
 
   const handleDeleteAddress = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this address?"))
-      return;
+    if (!window.confirm("Are you sure you want to delete this address?")) return;
 
     try {
-      const res = await axios.delete(
+      const token = localStorage.getItem("authToken");
+      await axios.delete(
         `http://localhost:5000/api/address/${id}`,
         {
           withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
-
-      if (res.status === 200) {
-        // Remove the deleted address from the UI
-        setAddressList((prev) => prev.filter((addr) => addr._id !== id));
-
-        if (selectedAddressId === id) {
-          setSelectedAddressId(null);
-          setShippingInfo({
-            fullName: "",
-            address: "",
-            city: "",
-            state: "",
-            pincode: "",
-            phone: "",
-            isDefault: false,
-            type: "home",
-          });
-        }
-      }
+      
+      toast.success("Address deleted successfully");
     } catch (err) {
       console.error("Delete failed", err);
-      alert("Failed to delete address");
+      toast.error("Failed to delete address");
     }
   };
 
@@ -181,14 +163,14 @@ const CartPage = () => {
           <p className="text-[#6b7280]">No saved addresses found.</p>
         ) : (
           <ul className="space-y-4">
-            {addressList.map((addr, idx) => (
+            {addressList.map((addr) => (
               <li
-                key={addr._id || idx}
+                key={addr._id}
                 className={`p-4 border rounded-md hover:border-[#4f46e5] transition cursor-pointer ${
                   selectedAddressId === addr._id ? "border-[#4f46e5]" : ""
                 }`}
                 onClick={() => {
-                  setSelectedAddressId(addr._id);
+                  selectAddress(addr._id);
                   setShippingInfo({
                     fullName: addr.fullName,
                     address: addr.address,
@@ -207,7 +189,7 @@ const CartPage = () => {
                       type="radio"
                       name="selectedAddress"
                       checked={selectedAddressId === addr._id}
-                      onChange={() => setSelectedAddressId(addr._id)}
+                      onChange={() => selectAddress(addr._id)}
                       className="accent-blue-600"
                     />
                     <span className="font-semibold capitalize">
@@ -222,7 +204,7 @@ const CartPage = () => {
                     )}
                     <button
                       onClick={(e) => {
-                        e.stopPropagation(); // prevent parent click
+                        e.stopPropagation();
                         handleDeleteAddress(addr._id);
                       }}
                       className="text-red-500 text-sm hover:underline"
@@ -385,79 +367,17 @@ const CartPage = () => {
                     <FiPlus /> Add New Address
                   </button>
                 </div>
-                {loading && (
+                {loading ? (
                   <p className="text-center text-gray-500 py-8">
                     Loading addresses...
                   </p>
-                )}
-                {!loading && addressList.length > 0 ? (
-                  <ul className="space-y-4">
-                    {addressList.map((addr) => (
-                      <li
-                        key={addr._id}
-                        onClick={() => selectAddress(addr._id)}
-                        className={`p-4 border rounded-lg cursor-pointer transition ${
-                          selectedAddressId === addr._id
-                            ? "border-indigo-500 ring-2 ring-indigo-200"
-                            : "border-gray-300"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <input
-                              type="radio"
-                              name="selectedAddress"
-                              checked={selectedAddressId === addr._id}
-                              onChange={() => selectAddress(addr._id)}
-                              className="h-5 w-5 text-indigo-600 focus:ring-indigo-500"
-                            />
-                            <div>
-                              <p className="font-semibold capitalize">
-                                {addr.type}{" "}
-                                {addr.isDefault && (
-                                  <span className="text-xs font-normal bg-green-100 text-green-700 px-2 py-0.5 rounded-full ml-2">
-                                    Default
-                                  </span>
-                                )}
-                              </p>
-                              <p className="text-gray-700 mt-1">
-                                {addr.fullName}, {addr.address}, {addr.city},{" "}
-                                {addr.state} - {addr.pincode}
-                              </p>
-                              <p className="text-gray-500 text-sm">
-                                Phone: {addr.phone}
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteAddress(addr._id);
-                            }}
-                            className="text-red-500 text-sm hover:underline"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                ) : addressList.length > 0 ? (
+                  <SavedAddresses />
                 ) : (
-                  !loading && (
-                    <p className="text-center text-gray-500 py-8">
-                      No saved addresses. Please add a new one.
-                    </p>
-                  )
+                  <p className="text-center text-gray-500 py-8">
+                    No saved addresses. Please add a new one.
+                  </p>
                 )}
-                <div className="mt-8 border-t pt-6 flex justify-end">
-                  <button
-                    onClick={() => setCheckoutStep("payment")}
-                    disabled={!selectedAddressId || loading}
-                    className="w-full sm:w-auto bg-indigo-600 text-white py-3 px-8 rounded-md font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Continue to Payment <FiChevronRight />
-                  </button>
-                </div>
               </div>
             )}
 

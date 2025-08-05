@@ -2,6 +2,8 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext";
+import { toast } from "react-toastify";
 
 const RazorpayPayment = ({
   cartTotal,
@@ -11,6 +13,7 @@ const RazorpayPayment = ({
 }) => {
   const [paymentMethod, setPaymentMethod] = useState("upi");
   const navigate = useNavigate();
+  const { clearCart } = useCart();
 
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
@@ -24,25 +27,31 @@ const RazorpayPayment = ({
 
   const handleCheckout = async () => {
     if (!addressId) {
-      alert("Please select a shipping address");
+      toast.error("Please select a shipping address");
       return;
     }
 
     if (paymentMethod === "upi") {
       const isLoaded = await loadRazorpayScript();
       if (!isLoaded) {
-        alert("Failed to load Razorpay SDK");
+        toast.error("Failed to load Razorpay SDK");
         return;
       }
 
       try {
+        const token = localStorage.getItem("authToken");
         const res = await axios.post(
           "http://localhost:5000/api/order/checkout",
           {
             addressId,
             method: "razorpay",
           },
-          { withCredentials: true }
+          {
+            withCredentials: true,
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
 
         const { razorpayOrderId, totalAmount } = res.data;
@@ -55,9 +64,6 @@ const RazorpayPayment = ({
           description: "Order Payment",
           order_id: razorpayOrderId,
           handler: async function (response) {
-            alert("Payment completed via Razorpay!");
-            console.log("Razorpay response:", response);
-
             try {
               const verifyRes = await axios.post(
                 "http://localhost:5000/api/order/verify",
@@ -67,21 +73,25 @@ const RazorpayPayment = ({
                   razorpay_signature: response.razorpay_signature,
                   orderId: res.data.orderId,
                 },
-                { withCredentials: true }
+                {
+                  withCredentials: true,
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
               );
 
-              alert("Payment verified and order confirmed!");
-              console.log("Verified Order:", verifyRes.data);
-
+              await clearCart();
               navigate("/orders");
+              toast.success("Order placed successfully!");
             } catch (err) {
-              alert("Payment verification failed");
               console.error("Verification error:", err);
+              toast.error("Payment verification failed");
             }
           },
           prefill: {
             name: userInfo.fullName,
-            email: "example@email.com",
+            email: userInfo.email || "example@email.com",
             contact: userInfo.phone,
           },
           theme: {
@@ -92,8 +102,8 @@ const RazorpayPayment = ({
         const paymentObject = new window.Razorpay(options);
         paymentObject.open();
       } catch (err) {
-        alert("❌ Razorpay checkout failed");
         console.error(err);
+        toast.error("Checkout failed");
       }
     }
   };
@@ -102,7 +112,6 @@ const RazorpayPayment = ({
     <div className="mt-6 bg-white p-6 rounded-lg shadow-sm border border-[#e5e7eb]">
       <h3 className="text-xl font-semibold mb-4">Choose Payment Method</h3>
 
-      {/* Razorpay/UPI Option */}
       <div
         onClick={() => setPaymentMethod("upi")}
         className={`flex items-center justify-between p-4 border rounded-lg mb-3 cursor-pointer ${
@@ -124,7 +133,6 @@ const RazorpayPayment = ({
         </div>
       </div>
 
-      {/* Summary Section */}
       <div className="border-t border-[#e5e7eb] pt-4">
         <div className="flex justify-between mb-2">
           <span className="text-[#4b5563]">Subtotal</span>
@@ -140,7 +148,6 @@ const RazorpayPayment = ({
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="mt-8 flex justify-between">
         <button
           onClick={() => setCheckoutStep("shipping")}

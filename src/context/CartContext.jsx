@@ -1,3 +1,4 @@
+// src/context/CartContext.js
 import { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import axios from "axios";
@@ -21,6 +22,9 @@ export const CartProvider = ({ children }) => {
 
       const response = await axios.get("http://localhost:5000/api/cart", {
         withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       const rawCart = response.data.items || [];
@@ -47,67 +51,54 @@ export const CartProvider = ({ children }) => {
 
   useEffect(() => {
     fetchCart();
-  }, [isLoggedIn, user]); // Refetch cart when auth status changes
+  }, [isLoggedIn, user]);
 
   const addToCart = async (product, quantity = 1, size, color) => {
-    const newCart = [...cart];
-    const existingItem = newCart.find(
-      (item) =>
-        item._id === product._id && item.size === size && item.color === color
-    );
-
-    if (existingItem) {
-      existingItem.quantity += quantity;
-    } else {
-      newCart.push({ ...product, quantity, size, color });
-    }
-
-    setCart(newCart);
-
     try {
+      const token = localStorage.getItem("authToken");
       const response = await axios.post(
         "http://localhost:5000/api/cart/add",
-        { productId: product._id, quantity, size, color },
-        { withCredentials: true }
+        { 
+          productId: product._id, 
+          quantity, 
+          size, 
+          color 
+        },
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
-      console.log("Cart (context) ID:", response.data._id);
-
+      await fetchCart();
       toast.success(`${product.title} added to cart!`);
     } catch (error) {
       console.error("Failed to add to cart:", error);
-      toast.error("Failed to add item to server cart.");
-      fetchCart(); // Revert to server state on error
+      toast.error("Failed to add item to cart.");
     }
   };
 
   const removeFromCart = async (productId, size, color) => {
     try {
+      const token = localStorage.getItem("authToken");
       await axios.post(
         "http://localhost:5000/api/cart/remove",
         { productId, size, color },
-        { withCredentials: true }
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
-      setCart((prevCart) =>
-        prevCart.filter(
-          (item) =>
-            !(
-              item._id === productId &&
-              item.size === size &&
-              item.color === color
-            )
-        )
-      );
-
-      toast.error("Item removed from cart.");
+      await fetchCart();
+      toast.success("Item removed from cart.");
     } catch (error) {
-      console.error(
-        "Failed to remove item:",
-        error.response?.data || error.message
-      );
-      toast.error("Failed to remove item from server.");
-      fetchCart(); // Revert to server state on error
+      console.error("Failed to remove item:", error);
+      toast.error("Failed to remove item from cart.");
     }
   };
 
@@ -118,25 +109,40 @@ export const CartProvider = ({ children }) => {
     }
 
     try {
+      const token = localStorage.getItem("authToken");
       await axios.put(
         "http://localhost:5000/api/cart/update",
         { productId, size, color, quantity: newQuantity },
-        { withCredentials: true }
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
-      setCart((prevCart) =>
-        prevCart.map((item) =>
-          item._id === productId && item.size === size && item.color === color
-            ? { ...item, quantity: newQuantity }
-            : item
-        )
-      );
-
+      await fetchCart();
       toast.success("Quantity updated successfully");
     } catch (error) {
       console.error("Failed to update quantity:", error);
       toast.error("Failed to update quantity");
-      fetchCart(); // Revert to server state on error
+    }
+  };
+
+  const clearCart = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      await axios.delete("http://localhost:5000/api/cart/clear", {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setCart([]);
+      toast.success("Cart cleared successfully");
+    } catch (error) {
+      console.error("Failed to clear cart:", error);
+      toast.error("Failed to clear cart");
     }
   };
 
@@ -156,6 +162,8 @@ export const CartProvider = ({ children }) => {
         updateQuantity,
         cartTotal,
         cartCount,
+        clearCart,
+        fetchCart,
       }}
     >
       {children}
