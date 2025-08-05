@@ -7,6 +7,28 @@ const adminApi = axios.create({
   withCredentials: true,
 });
 
+// ADDED: Axios interceptor to handle auth errors globally
+// This is our "safety net" now that we aren't checking auth on page load.
+adminApi.interceptors.response.use(
+  // If the response is successful, just return it
+  (response) => response,
+  // If there's an error...
+  (error) => {
+    // Check if the error is a 401 Unauthorized
+    if (error.response && error.response.status === 401) {
+      console.log('Session expired or invalid. Forcing logout.');
+      // Remove the local storage flag
+      localStorage.removeItem('isAdminLoggedIn');
+      // Force a redirect to the admin login page.
+      // Using window.location.href ensures a full page reload, clearing all state.
+      window.location.href = '/admin';
+    }
+    // For all other errors, just pass them along
+    return Promise.reject(error);
+  }
+);
+
+
 // Register admin
 export const registerAdmin = async (adminData) => {
   try {
@@ -27,15 +49,12 @@ export const loginAdmin = async (credentials) => {
   }
 };
 
-// Check admin auth status
+// REMOVED: The checkAdminAuthStatus function is no longer needed.
+/*
 export const checkAdminAuthStatus = async () => {
-  try {
-    const response = await adminApi.get('/check-auth');
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Admin authentication check failed' };
-  }
+  // ...
 };
+*/
 
 // Admin logout
 export const logoutAdmin = async () => {
