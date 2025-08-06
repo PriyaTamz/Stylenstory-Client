@@ -3,8 +3,7 @@ import ProductTable from '../../components/admin/ProductTable'
 
 function ProductsDetails() {
   return (
-    <div>
-
+     <div className="p-4 sm:p-6">
       <ProductTable />
     </div>
   )

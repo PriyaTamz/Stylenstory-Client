@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useProducts } from '../context/ProductContext';
 import ProductCard from '../components/product/ProductCard';
 import SearchBar from '../components/ui/SearchBar';
@@ -6,8 +6,8 @@ import CategoryFilter from '../components/ui/CategoryFilter';
 import { FiFilter, FiX, FiSearch, FiLoader, FiChevronDown } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// A small, reusable accordion component for the filters
-const FilterSection = ({ title, children }) => {
+// Performance: Wrap the component in React.memo to prevent re-renders if props don't change.
+const FilterSection = React.memo(({ title, children }) => {
   const [isOpen, setIsOpen] = useState(true);
   return (
     <div className="border-b border-gray-200 py-6">
@@ -37,7 +37,7 @@ const FilterSection = ({ title, children }) => {
       </AnimatePresence>
     </div>
   );
-};
+});
 
 const ProductListing = () => {
   const {
@@ -53,32 +53,47 @@ const ProductListing = () => {
 
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [sortOption, setSortOption] = useState('default');
-  const [sortedProducts, setSortedProducts] = useState([]);
 
-  // Dynamically generate categories
-  const categories = ['all', ...new Set(allProducts.flatMap(p => p.category))];
+  // Performance: Memoize categories so they are not recalculated on every render.
+  const categories = useMemo(() => {
+    if (!allProducts || allProducts.length === 0) return ['all'];
+    // Use a Set to efficiently get unique category strings.
+    const uniqueCategories = [...new Set(allProducts.flatMap(p => p.category || []))];
+    return ['all', ...uniqueCategories];
+  }, [allProducts]);
   
-  // Apply sorting whenever the filtered products or sort option changes
-  useEffect(() => {
-    let tempProducts = [...filteredProducts];
+  // Performance: Replace useEffect + useState for sorting with a single useMemo.
+  // This avoids an extra render cycle and only recalculates when dependencies change.
+  const sortedProducts = useMemo(() => {
+    // Use toSorted() for an immutable sort, creating a new array.
     switch (sortOption) {
       case 'price-asc':
-        tempProducts.sort((a, b) => a.price - b.price);
-        break;
+        return [...filteredProducts].sort((a, b) => a.price - b.price);
       case 'price-desc':
-        tempProducts.sort((a, b) => b.price - a.price);
-        break;
+        return [...filteredProducts].sort((a, b) => b.price - a.price);
       case 'newest':
-        tempProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        break;
+        return [...filteredProducts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       default:
-        // No sorting or default sorting (can be based on original order)
-        break;
+        return filteredProducts; // Return the original filtered array if no sort is applied.
     }
-    setSortedProducts(tempProducts);
   }, [filteredProducts, sortOption]);
 
-  const FilterPanel = () => (
+  // Performance: Memoize event handlers with useCallback.
+  const handleCategorySelect = useCallback((category) => {
+    setSelectedCategory(category);
+    setMobileFiltersOpen(false); // Close panel on selection
+  }, [setSelectedCategory]);
+
+  const handleSortChange = useCallback((e) => {
+    setSortOption(e.target.value);
+  }, []);
+
+  const toggleMobileFilters = useCallback(() => {
+    setMobileFiltersOpen(open => !open);
+  }, []);
+  
+  // Performance: Memoize the FilterPanel JSX to prevent re-creating it on every render.
+  const filterPanelContent = useMemo(() => (
     <>
       <FilterSection title="Search">
         <SearchBar searchQuery={searchTerm} onSearch={setSearchTerm} />
@@ -87,14 +102,12 @@ const ProductListing = () => {
         <CategoryFilter
           categories={categories}
           selected={selectedCategory}
-          onSelect={(category) => {
-            setSelectedCategory(category);
-            if (mobileFiltersOpen) setMobileFiltersOpen(false); // Close panel on selection
-          }}
+          onSelect={handleCategorySelect}
         />
       </FilterSection>
     </>
-  );
+  ), [searchTerm, setSearchTerm, categories, selectedCategory, handleCategorySelect]);
+
 
   if (loading) {
     return (
@@ -126,7 +139,7 @@ const ProductListing = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
               className="fixed inset-0 bg-black bg-opacity-25 z-40 lg:hidden"
-              onClick={() => setMobileFiltersOpen(false)}
+              onClick={toggleMobileFilters}
             />
             <motion.div
               initial={{ x: '100%' }}
@@ -140,13 +153,13 @@ const ProductListing = () => {
                 <button
                   type="button"
                   className="-mr-2 p-2 rounded-md text-gray-400 hover:text-gray-500"
-                  onClick={() => setMobileFiltersOpen(false)}
+                  onClick={toggleMobileFilters}
                 >
                   <FiX className="h-6 w-6" />
                 </button>
               </div>
               <div className="px-4 mt-2 overflow-y-auto">
-                <FilterPanel />
+                {filterPanelContent}
               </div>
             </motion.div>
           </>
@@ -161,7 +174,7 @@ const ProductListing = () => {
             <div className="relative inline-block text-left">
               <select
                 value={sortOption}
-                onChange={(e) => setSortOption(e.target.value)}
+                onChange={handleSortChange}
                 className="pl-3 pr-8 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 <option value="default">Sort by</option>
@@ -174,7 +187,7 @@ const ProductListing = () => {
             <button
               type="button"
               className="p-2 ml-4 text-gray-400 hover:text-gray-500 sm:ml-6 lg:hidden"
-              onClick={() => setMobileFiltersOpen(true)}
+              onClick={toggleMobileFilters}
             >
               <FiFilter className="w-5 h-5" />
             </button>
@@ -187,7 +200,7 @@ const ProductListing = () => {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-x-8 gap-y-10">
             {/* Desktop Filters */}
             <aside className="hidden lg:block">
-              <FilterPanel />
+              {filterPanelContent}
             </aside>
 
             {/* Product grid */}
@@ -199,7 +212,7 @@ const ProductListing = () => {
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="flex flex-col items-center justify-center py-20 text-center rounded-lg bg-gray-50">
                   <FiSearch className="h-16 w-16 text-gray-300 mb-4" />
                   <h3 className="text-xl font-semibold text-gray-800">No Products Found</h3>
                   <p className="mt-2 text-gray-500">
