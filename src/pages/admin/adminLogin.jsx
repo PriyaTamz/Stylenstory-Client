@@ -8,7 +8,6 @@ import { useAdminAuth } from '../../context/AdminAuthContext';
 const AdminLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  // ADDED: State to manage password visibility
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAdminAuth();
@@ -77,7 +76,7 @@ const AdminLogin = () => {
               />
               {/* ADDED: Button to toggle password visibility */}
               <button
-                type="button" // Important to prevent form submission
+                type="button" 
                 onClick={() => setShowPassword(!showPassword)}
                 className="text-gray-500 hover:text-gray-700 focus:outline-none"
                 aria-label={showPassword ? "Hide password" : "Show password"}
