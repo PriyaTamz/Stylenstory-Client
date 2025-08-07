@@ -5,7 +5,7 @@ import { motion, AnimatePresence, LazyMotion, domAnimation } from "framer-motion
 
 // Component & Asset Imports
 import ProductCard from "../components/product/ProductCard";
-import BackGroundImage from "../assets/Stylen-bg.jpg";
+import BackGroundImage from "../assets/stylen-bg.jpg";
 import PromoBanner from "../assets/promo-banner-bg.png";
 import Banner1 from "../assets/banner-bg-1.jpg";
 import Banner2 from "../assets/banner-bg-2.jpg";
