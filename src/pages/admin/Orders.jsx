@@ -10,7 +10,7 @@ const Orders = () => {
     const fetchOrders = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/order/admin/orders",
+          "https://menstshirtstore-backend.onrender.com/api/order/admin/orders",
           {
             withCredentials: true, // If using cookies/session auth
           }

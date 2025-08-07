@@ -8,7 +8,7 @@ const Users = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/order/admin/all-usersData", {
+      const res = await axios.get("https://menstshirtstore-backend.onrender.com/api/order/admin/all-usersData", {
         withCredentials: true, // include cookies (if using JWT auth with cookies)
       });
 

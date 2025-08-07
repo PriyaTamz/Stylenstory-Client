@@ -19,7 +19,7 @@ export const ProductProvider = ({ children }) => {
       try {
         setLoading(true);
         // API call is made directly here
-        const response = await axios.get('http://localhost:5000/api/product');
+        const response = await axios.get('https://menstshirtstore-backend.onrender.com/api/product');
         setAllProducts(response.data);
         setFilteredProducts(response.data); 
       } catch (err) {

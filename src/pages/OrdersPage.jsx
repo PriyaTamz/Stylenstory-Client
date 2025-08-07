@@ -12,7 +12,7 @@ const OrdersPage = () => {
     const fetchOrders = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/order/user-order",
+          "https://menstshirtstore-backend.onrender.com/api/order/user-order",
           {
             withCredentials: true,
           }
@@ -40,7 +40,7 @@ const OrdersPage = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/order/return",
+        "https://menstshirtstore-backend.onrender.com/api/order/return",
         { orderId, productId, reason },
         { withCredentials: true }
       );

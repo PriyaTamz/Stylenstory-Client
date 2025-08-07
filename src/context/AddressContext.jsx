@@ -20,7 +20,7 @@ export const AddressProvider = ({ children }) => {
     }
     setLoading(true);
     try {
-      const response = await axios.get("http://localhost:5000/api/address", { withCredentials: true });
+      const response = await axios.get("https://menstshirtstore-backend.onrender.com/api/address", { withCredentials: true });
       const addresses = response.data.addresses || [];
       setAddressList(addresses);
       if (addresses.length > 0) {
@@ -41,7 +41,7 @@ export const AddressProvider = ({ children }) => {
   const addAddress = async (addressData) => {
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:5000/api/address", addressData, { withCredentials: true });
+      const response = await axios.post("https://menstshirtstore-backend.onrender.com/api/address", addressData, { withCredentials: true });
       const newAddress = response.data.address;
 
       let updatedList = [...addressList];
@@ -67,7 +67,7 @@ export const AddressProvider = ({ children }) => {
     if (!window.confirm("Are you sure you want to delete this address?")) return;
     setLoading(true);
     try {
-      await axios.delete(`http://localhost:5000/api/address/${addressId}`, { withCredentials: true });
+      await axios.delete(`https://menstshirtstore-backend.onrender.com/api/address/${addressId}`, { withCredentials: true });
       
       setAddressList(prev => prev.filter(addr => addr._id !== addressId));
       if (selectedAddressId === addressId) {

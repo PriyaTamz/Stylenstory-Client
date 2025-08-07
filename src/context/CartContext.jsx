@@ -22,7 +22,7 @@ export const CartProvider = ({ children }) => {
         return;
       }
 
-      const response = await axios.get("http://localhost:5000/api/cart", {
+      const response = await axios.get("https://menstshirtstore-backend.onrender.com/api/cart", {
         withCredentials: true,
         headers: {
           Authorization: `Bearer ${token}`,
@@ -58,7 +58,7 @@ export const CartProvider = ({ children }) => {
   const addToCart = async (product, quantity = 1, size, color) => {
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/cart/add",
+        "https://menstshirtstore-backend.onrender.com/api/cart/add",
         {
           productId: product._id,
           quantity,
@@ -92,7 +92,7 @@ export const CartProvider = ({ children }) => {
     try {
       const token = localStorage.getItem("authToken");
       await axios.post(
-        "http://localhost:5000/api/cart/remove",
+        "https://menstshirtstore-backend.onrender.com/api/cart/remove",
         { productId, size, color },
         {
           withCredentials: true,
@@ -119,7 +119,7 @@ export const CartProvider = ({ children }) => {
     try {
       const token = localStorage.getItem("authToken");
       await axios.put(
-        "http://localhost:5000/api/cart/update",
+        "https://menstshirtstore-backend.onrender.com/api/cart/update",
         { productId, size, color, quantity: newQuantity },
         {
           withCredentials: true,
@@ -140,7 +140,7 @@ export const CartProvider = ({ children }) => {
   const clearCart = async () => {
     try {
       const token = localStorage.getItem("authToken");
-      await axios.delete("http://localhost:5000/api/cart/clear", {
+      await axios.delete("https://menstshirtstore-backend.onrender.com/api/cart/clear", {
         withCredentials: true,
         headers: {
           Authorization: `Bearer ${token}`,

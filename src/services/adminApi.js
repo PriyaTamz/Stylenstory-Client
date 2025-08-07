@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const ADMIN_API_BASE_URL = 'http://localhost:5000/api/admin';
+const ADMIN_API_BASE_URL = 'https://menstshirtstore-backend.onrender.com/api/admin';
 
 const adminApi = axios.create({
   baseURL: ADMIN_API_BASE_URL,

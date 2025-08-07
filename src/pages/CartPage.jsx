@@ -114,7 +114,7 @@ const CartPage = () => {
     try {
       const token = localStorage.getItem("authToken");
       await axios.post(
-        "http://localhost:5000/api/address", 
+        "https://menstshirtstore-backend.onrender.com/api/address", 
         shippingInfo,
         {
           withCredentials: true,
@@ -139,7 +139,7 @@ const CartPage = () => {
     try {
       const token = localStorage.getItem("authToken");
       await axios.delete(
-        `http://localhost:5000/api/address/${id}`,
+        `https://menstshirtstore-backend.onrender.com/api/address/${id}`,
         {
           withCredentials: true,
           headers: {

@@ -34,7 +34,7 @@ const ProductDetail = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `http://localhost:5000/api/product/${id}`
+          `https://menstshirtstore-backend.onrender.com/api/product/${id}`
         );
         const fetchedProduct = response.data;
         setProduct(fetchedProduct);
