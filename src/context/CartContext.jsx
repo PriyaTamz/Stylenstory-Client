@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { useAuth } from "./AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const CartContext = createContext();
 
@@ -10,6 +11,7 @@ export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const { isLoggedIn, user } = useAuth();
+  const navigate = useNavigate();
 
   const fetchCart = async () => {
     try {
@@ -55,20 +57,16 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = async (product, quantity = 1, size, color) => {
     try {
-      const token = localStorage.getItem("authToken");
       const response = await axios.post(
         "http://localhost:5000/api/cart/add",
-        { 
-          productId: product._id, 
-          quantity, 
-          size, 
-          color 
+        {
+          productId: product._id,
+          quantity,
+          size,
+          color,
         },
         {
           withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 
@@ -76,7 +74,17 @@ export const CartProvider = ({ children }) => {
       toast.success(`${product.title} added to cart!`);
     } catch (error) {
       console.error("Failed to add to cart:", error);
-      toast.error("Failed to add item to cart.");
+
+      if (
+        error.response &&
+        error.response.status === 401 &&
+        error.response.data.message === "Not authenticated. Please login."
+      ) {
+        toast.error("Please login to add items to cart.");
+        navigate("/auth"); // Redirect to login page
+      } else {
+        toast.error("Failed to add item to cart.");
+      }
     }
   };
 

@@ -19,8 +19,8 @@ const Orders = () => {
         const formattedOrders = res.data.orders.map((order) => ({
           id: order._id,
           customer: {
-            name: order.address.fullName,
-            email: order.user.email,
+            name: order.address?.fullName || "Unknown",
+            email: order.user?.email || "N/A",
           },
           date: new Date(order.createdAt).toLocaleDateString("en-US", {
             year: "numeric",
@@ -36,7 +36,7 @@ const Orders = () => {
             returnRequested: item.returnRequested || false,
             returnReason: item.returnReason || "",
           })),
-          paymentId: order.razorpayPaymentId, 
+          paymentId: order.razorpayPaymentId,
         }));
 
         setOrders(formattedOrders);
@@ -49,7 +49,6 @@ const Orders = () => {
 
     fetchOrders();
   }, []);
-  
 
   if (loading) return <p className="p-4">Loading...</p>;
 
