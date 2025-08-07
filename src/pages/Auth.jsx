@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { FaUser, FaLock, FaPhone, FaEnvelope } from 'react-icons/fa';
-import { FiSend, FiCheckCircle } from 'react-icons/fi';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { FaUser, FaLock, FaPhone, FaEnvelope, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FiCheckCircle } from 'react-icons/fi';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { 
-  registerUser, 
-  verifyRegisterOtp, 
-  requestLoginOtp, 
-  verifyLoginOtp 
-} from '../services/api';
+import { registerUser, loginUser, forgotPassword } from '../services/api';
+import { toast } from 'react-toastify';
 import LoginBackGroundImage from '../assets/login-bg.jpg';
 import RegisterBackGroundImage from '../assets/register-bg.jpg';
 import StylenLogo from '../assets/stylenlogo.png';
@@ -17,519 +13,263 @@ function Auth() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState('login');
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpCountdown, setOtpCountdown] = useState(0);
+  
+  const [activeTab, setActiveTab] = useState('login'); // 'login', 'register', 'forgot'
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [successAnimation, setSuccessAnimation] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registrationData, setRegistrationData] = useState({
     firstName: '',
     lastName: '',
     phone: '',
-    email: ''
+    email: '',
+    password: '',
+    confirmPassword: ''
   });
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [successAnimation, setSuccessAnimation] = useState(false);
-  const [registerOtpSent, setRegisterOtpSent] = useState(false);
-  const [registerOtp, setRegisterOtp] = useState('');
-  const [registerSession, setRegisterSession] = useState(null);
+  const [forgotEmail, setForgotEmail] = useState('');
 
-  // Background images for login and register
   const bgImages = {
     login: LoginBackGroundImage,
-    register: RegisterBackGroundImage
+    register: RegisterBackGroundImage,
+    forgot: LoginBackGroundImage,
   };
 
-  useEffect(() => {
-    if (location.state?.from) {
-      setActiveTab('login');
-    }
-  }, [location]);
+  const resetForms = () => {
+    setLoginData({ email: '', password: '' });
+    setRegistrationData({ firstName: '', lastName: '', phone: '', email: '', password: '', confirmPassword: '' });
+    setForgotEmail('');
+    setErrors({});
+  };
+  
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    resetForms();
+  };
 
-  useEffect(() => {
-    let timer;
-    if (otpCountdown > 0) {
-      timer = setTimeout(() => setOtpCountdown(otpCountdown - 1), 1000);
-    }
-    return () => clearTimeout(timer);
-  }, [otpCountdown]);
-
-  const validatePhone = (number) => /^[0-9]{10}$/.test(number);
-  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-  const handleSendOtp = async () => {
-    if (!validatePhone(phone)) {
-      setErrors({ phone: 'Please enter a valid 10-digit mobile number' });
-      return;
-    }
-    
-    setIsLoading(true);
-    try {
-      const { data } = await requestLoginOtp(phone);
-      setOtpSent(true);
-      setOtpCountdown(30);
-      setErrors({});
-    } catch (error) {
-      setErrors({ general: error.message || 'Failed to send OTP' });
-    } finally {
-      setIsLoading(false);
+  const handleInputChange = (e, formType) => {
+    const { name, value } = e.target;
+    if (formType === 'login') {
+      setLoginData(prev => ({ ...prev, [name]: value }));
+    } else if (formType === 'register') {
+      setRegistrationData(prev => ({ ...prev, [name]: value }));
+    } else {
+      setForgotEmail(value);
     }
   };
 
-  const handleVerifyOtp = async () => {
-    if (otp.length !== 6) {
-      setErrors({ otp: 'Please enter a 6-digit OTP' });
-      return;
-    }
-    
+  // --- LOGIN HANDLER ---
+  const handleLogin = async (e) => {
+    e.preventDefault();
     setIsLoading(true);
+    setErrors({});
     try {
-      const { data } = await verifyLoginOtp({ phone, otp });
+      const data = await loginUser(loginData);
       login(data.token, data.user);
       setSuccessAnimation(true);
       setTimeout(() => {
-        setIsLoading(false);
         navigate(location.state?.from?.pathname || '/');
       }, 1500);
     } catch (error) {
-      setErrors({ otp: error.message || 'Invalid OTP' });
-      setIsLoading(false);
-    }
-  };
-
-  const handleSendRegisterOtp = async () => {
-    const newErrors = {};
-    
-    if (!registrationData.firstName.trim()) newErrors.firstName = 'First name is required';
-    if (!registrationData.lastName.trim()) newErrors.lastName = 'Last name is required';
-    if (!validateEmail(registrationData.email)) newErrors.email = 'Please enter a valid email';
-    if (!validatePhone(registrationData.phone)) newErrors.phone = 'Please enter a valid 10-digit mobile number';
-    
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-    
-    setIsLoading(true);
-    try {
-      const { data } = await registerUser(registrationData);
-      setRegisterOtpSent(true);
-      setOtpCountdown(30);
-      setRegisterSession({
-        userId: data.userId,
-        sessionId: data.sessionId,
-        phone: registrationData.phone
-      });
-      setErrors({});
-    } catch (error) {
-      setErrors({ general: error.message || 'Registration failed' });
+      toast.error(error.message || 'Invalid email or password.');
+      setErrors({ general: error.message || 'Invalid email or password.' });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleVerifyRegisterOtp = async () => {
-    if (registerOtp.length !== 6) {
-      setErrors({ registerOtp: 'Please enter a 6-digit OTP' });
+  // --- REGISTRATION HANDLER ---
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    if (registrationData.password !== registrationData.confirmPassword) {
+      setErrors({ confirmPassword: 'Passwords do not match' });
       return;
     }
-    
-    if (!registerSession) {
-      setErrors({ general: 'Session expired. Please try again.' });
-      return;
-    }
-    
     setIsLoading(true);
+    setErrors({});
     try {
-      const { data } = await verifyRegisterOtp({
-        phone: registerSession.phone,
-        otp: registerOtp,
-        userId: registerSession.userId
-      });
-      login(data.token, data.user);
-      setSuccessAnimation(true);
-      setTimeout(() => {
-        setIsLoading(false);
-        navigate('/');
-      }, 1500);
+      const data = await registerUser(registrationData);
+      toast.success(data.message || 'Registration successful! Please log in.');
+      setActiveTab('login'); // Switch to login tab after successful registration
+      resetForms();
     } catch (error) {
-      setErrors({ registerOtp: error.message || 'Invalid OTP' });
+      toast.error(error.message || 'Registration failed.');
+      setErrors({ general: error.message || 'An error occurred during registration.' });
+    } finally {
       setIsLoading(false);
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setRegistrationData(prev => ({ ...prev, [name]: value }));
+  // --- FORGOT PASSWORD HANDLER ---
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrors({});
+    try {
+        const data = await forgotPassword(forgotEmail);
+        toast.success(data.message || 'If an account exists, a password reset email has been sent.');
+        setActiveTab('login'); // Go back to login screen
+    } catch (error) {
+        toast.error(error.message || 'Could not process request.');
+        setErrors({ general: error.message });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
-  const resetForm = () => {
-    setPhone('');
-    setOtp('');
-    setOtpSent(false);
-    setRegisterOtp('');
-    setRegisterOtpSent(false);
-    setRegisterSession(null);
-    setRegistrationData({
-      firstName: '',
-      lastName: '',
-      phone: '',
-      email: ''
-    });
-    setErrors({});
-  };
+  const renderLoginForm = () => (
+    <form onSubmit={handleLogin} className="space-y-5">
+      {/* Email Input */}
+      <div>
+        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+        <div className="mt-1 relative">
+          <FaEnvelope className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input name="email" type="email" required value={loginData.email} onChange={(e) => handleInputChange(e, 'login')} className="block w-full pl-10 py-3 border border-gray-300 rounded-lg shadow-sm" placeholder="john@example.com" />
+        </div>
+      </div>
+      {/* Password Input */}
+      <div>
+        <label htmlFor="password-login" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+        <div className="mt-1 relative">
+          <FaLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input name="password" type={showPassword ? 'text' : 'password'} required value={loginData.password} onChange={(e) => handleInputChange(e, 'login')} className="block w-full pl-10 py-3 border border-gray-300 rounded-lg shadow-sm" placeholder="••••••••" />
+          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+            {showPassword ? <FaEyeSlash /> : <FaEye />}
+          </button>
+        </div>
+      </div>
+      <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center">
+            <input id="remember-me" name="remember-me" type="checkbox" className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+            <label htmlFor="remember-me" className="ml-2 block text-gray-900">Remember me</label>
+        </div>
+        <button type="button" onClick={() => setActiveTab('forgot')} className="font-medium text-indigo-600 hover:text-indigo-500">Forgot password?</button>
+      </div>
+      {/* Submit Button */}
+      <button type="submit" disabled={isLoading} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50">
+        {isLoading ? 'Signing In...' : 'Sign In'}
+      </button>
+    </form>
+  );
+
+  const renderRegisterForm = () => (
+    <form onSubmit={handleRegister} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+            <InputWithIcon icon={<FaUser />} name="firstName" placeholder="John" value={registrationData.firstName} onChange={(e) => handleInputChange(e, 'register')} error={errors.firstName} required />
+            <InputWithIcon icon={<FaUser />} name="lastName" placeholder="Doe" value={registrationData.lastName} onChange={(e) => handleInputChange(e, 'register')} error={errors.lastName} required />
+        </div>
+        <InputWithIcon icon={<FaEnvelope />} name="email" type="email" placeholder="john@example.com" value={registrationData.email} onChange={(e) => handleInputChange(e, 'register')} error={errors.email} required />
+        <InputWithIcon icon={<FaPhone />} name="phone" type="tel" placeholder="9876543210" value={registrationData.phone} onChange={(e) => handleInputChange(e, 'register')} error={errors.phone} required />
+        <InputWithIcon icon={<FaLock />} name="password" type={showPassword ? 'text' : 'password'} placeholder="Password" value={registrationData.password} onChange={(e) => handleInputChange(e, 'register')} error={errors.password} required toggleVisibility={() => setShowPassword(!showPassword)} isPassword />
+        <InputWithIcon icon={<FaLock />} name="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm Password" value={registrationData.confirmPassword} onChange={(e) => handleInputChange(e, 'register')} error={errors.confirmPassword} required toggleVisibility={() => setShowConfirmPassword(!showConfirmPassword)} isPassword />
+        
+        <div className="pt-2">
+            <button type="submit" disabled={isLoading} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50">
+            {isLoading ? 'Creating Account...' : 'Create Account'}
+            </button>
+        </div>
+    </form>
+  );
+
+  const renderForgotPasswordForm = () => (
+    <form onSubmit={handleForgotPassword} className="space-y-5">
+        <p className="text-center text-sm text-gray-600">Enter your email and we'll send you a link to reset your password.</p>
+        <InputWithIcon icon={<FaEnvelope />} name="email-forgot" type="email" placeholder="Your registered email" value={forgotEmail} onChange={(e) => handleInputChange(e, 'forgot')} error={errors.general} required />
+        <div className="pt-2">
+            <button type="submit" disabled={isLoading} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50">
+            {isLoading ? 'Sending...' : 'Send Reset Link'}
+            </button>
+        </div>
+        <div className="text-center">
+            <button type="button" onClick={() => setActiveTab('login')} className="font-medium text-indigo-600 hover:text-indigo-500">
+                &larr; Back to Login
+            </button>
+        </div>
+    </form>
+  );
+  
+  const getTitle = () => {
+    if (activeTab === 'login') return 'Welcome Back!';
+    if (activeTab === 'register') return 'Join Stylenstory';
+    return 'Forgot Password?';
+  }
 
   return (
     <div className="min-h-screen flex">
       {/* Background image */}
       <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 z-10"></div>
-        <img 
-          src={activeTab === 'login' ? LoginBackGroundImage : RegisterBackGroundImage}
-          alt="Background"
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
-          style={{ opacity: 0.9 }}
-        />
+        <img src={bgImages[activeTab]} alt="Background" className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500" />
       </div>
 
       {/* Auth form */}
       <div className="w-full lg:w-1/2 bg-gray-50 flex flex-col justify-center py-12 px-6">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="flex justify-center lg:hidden">
-            <img src={StylenLogo} alt="Stylen Logo" className="h-12" />
-          </div>
-          <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-            {activeTab === 'login' ? 'Welcome Back!' : 'Join Stylenstory'}
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            {activeTab === 'login' 
-              ? 'Sign in to access your personalized style dashboard' 
-              : 'Create an account to start your style journey'}
-          </p>
+            <div className="flex justify-center lg:hidden">
+              <img src={StylenLogo} alt="Stylen Logo" className="h-12" />
+            </div>
+            <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">{getTitle()}</h2>
         </div>
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white py-8 px-6 shadow-xl rounded-2xl">
-            {/* Tab buttons */}
-            <div className="flex border-b border-gray-200 mb-8">
-              <button
-                onClick={() => { setActiveTab('login'); resetForm(); }}
-                className={`flex-1 py-3 font-medium text-sm ${activeTab === 'login' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => { setActiveTab('register'); resetForm(); }}
-                className={`flex-1 py-3 font-medium text-sm ${activeTab === 'register' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                Register
-              </button>
-            </div>
+          <div className="bg-white py-8 px-6 shadow-xl rounded-2xl relative">
+            {activeTab !== 'forgot' && (
+              <div className="flex border-b border-gray-200 mb-8">
+                <button onClick={() => handleTabChange('login')} className={`flex-1 py-3 font-medium text-sm ${activeTab === 'login' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}>Sign In</button>
+                <button onClick={() => handleTabChange('register')} className={`flex-1 py-3 font-medium text-sm ${activeTab === 'register' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}>Register</button>
+              </div>
+            )}
 
-            {/* Success animation overlay */}
             {successAnimation && (
               <div className="absolute inset-0 bg-white bg-opacity-90 flex flex-col items-center justify-center rounded-2xl z-10">
-                <div className="animate-bounce">
-                  <FiCheckCircle className="text-green-500 text-6xl" />
-                </div>
-                <p className="mt-4 text-xl font-medium text-gray-900">
-                  {activeTab === 'login' ? 'Login Successful!' : 'Registration Complete!'}
-                </p>
-                <p className="mt-2 text-gray-600">Redirecting you now...</p>
+                <FiCheckCircle className="text-green-500 text-6xl animate-bounce" />
+                <p className="mt-4 text-xl font-medium text-gray-900">Login Successful!</p>
+                <p className="mt-2 text-gray-600">Redirecting...</p>
               </div>
             )}
 
-            {/* Error message */}
-            {errors.general && (
-              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
-                {errors.general}
-              </div>
-            )}
-
-            {/* Login Form */}
-            {activeTab === 'login' ? (
-              <div className="space-y-5">
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                    Mobile Number
-                  </label>
-                  <div className="mt-1 relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FaPhone className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      disabled={otpSent}
-                      className={`block w-full pl-10 pr-3 py-3 border ${errors.phone ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                      placeholder="9876543210"
-                    />
-                  </div>
-                  {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
-                </div>
-
-                {otpSent && (
-                  <div className="animate-fade-in">
-                    <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-1">
-                      OTP Verification
-                    </label>
-                    <div className="mt-1 relative rounded-md shadow-sm">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FaLock className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="otp"
-                        name="otp"
-                        type="text"
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
-                        className={`block w-full pl-10 pr-3 py-3 border ${errors.otp ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                        placeholder="Enter 6-digit OTP"
-                      />
-                    </div>
-                    {errors.otp && <p className="mt-1 text-sm text-red-600">{errors.otp}</p>}
-                    <div className="mt-2 text-xs text-gray-500 flex justify-between">
-                      {otpCountdown > 0 ? (
-                        <span>OTP expires in {otpCountdown} seconds</span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={handleSendOtp}
-                          className="text-indigo-600 hover:text-indigo-500 font-medium"
-                        >
-                          Resend OTP
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <div className="pt-2">
-                  {!otpSent ? (
-                    <button
-                      onClick={handleSendOtp}
-                      disabled={isLoading}
-                      className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300"
-                    >
-                      {isLoading ? (
-                        'Sending...'
-                      ) : (
-                        <>
-                          <FiSend className="mr-2" />
-                          Send OTP
-                        </>
-                      )}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleVerifyOtp}
-                      disabled={isLoading}
-                      className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300"
-                    >
-                      {isLoading ? 'Verifying...' : 'Verify & Sign In'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ) : (
-              /* Registration Form */
-              <div className="space-y-5">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                      First Name
-                    </label>
-                    <div className="mt-1 relative rounded-md shadow-sm">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FaUser className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="firstName"
-                        name="firstName"
-                        type="text"
-                        value={registrationData.firstName}
-                        onChange={handleInputChange}
-                        className={`block w-full pl-10 pr-3 py-3 border ${errors.firstName ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                        placeholder="John"
-                      />
-                    </div>
-                    {errors.firstName && <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>}
-                  </div>
-
-                  <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                      Last Name
-                    </label>
-                    <div className="mt-1 relative rounded-md shadow-sm">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FaUser className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="lastName"
-                        name="lastName"
-                        type="text"
-                        value={registrationData.lastName}
-                        onChange={handleInputChange}
-                        className={`block w-full pl-10 pr-3 py-3 border ${errors.lastName ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                        placeholder="Doe"
-                      />
-                    </div>
-                    {errors.lastName && <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>}
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Address
-                  </label>
-                  <div className="mt-1 relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FaEnvelope className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={registrationData.email}
-                      onChange={handleInputChange}
-                      className={`block w-full pl-10 pr-3 py-3 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                      placeholder="john@example.com"
-                    />
-                  </div>
-                  {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
-                </div>
-
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                    Mobile Number
-                  </label>
-                  <div className="mt-1 relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FaPhone className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      value={registrationData.phone}
-                      onChange={handleInputChange}
-                      disabled={registerOtpSent}
-                      className={`block w-full pl-10 pr-3 py-3 border ${errors.phone ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                      placeholder="9876543210"
-                    />
-                  </div>
-                  {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
-                </div>
-
-                {registerOtpSent && (
-                  <div className="animate-fade-in">
-                    <label htmlFor="registerOtp" className="block text-sm font-medium text-gray-700 mb-1">
-                      OTP Verification
-                    </label>
-                    <div className="mt-1 relative rounded-md shadow-sm">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <FaLock className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="registerOtp"
-                        name="registerOtp"
-                        type="text"
-                        value={registerOtp}
-                        onChange={(e) => setRegisterOtp(e.target.value)}
-                        className={`block w-full pl-10 pr-3 py-3 border ${errors.registerOtp ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
-                        placeholder="Enter 6-digit OTP"
-                      />
-                    </div>
-                    {errors.registerOtp && <p className="mt-1 text-sm text-red-600">{errors.registerOtp}</p>}
-                    <div className="mt-2 text-xs text-gray-500 flex justify-between">
-                      {otpCountdown > 0 ? (
-                        <span>OTP expires in {otpCountdown} seconds</span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={handleSendRegisterOtp}
-                          className="text-indigo-600 hover:text-indigo-500 font-medium"
-                        >
-                          Resend OTP
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex items-center">
-                  <input
-                    id="terms"
-                    name="terms"
-                    type="checkbox"
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
-                    I agree to the <a href="#" className="text-indigo-600 hover:text-indigo-500">Terms</a> and <a href="#" className="text-indigo-600 hover:text-indigo-500">Privacy Policy</a>
-                  </label>
-                </div>
-
-                <div className="pt-2">
-                  {!registerOtpSent ? (
-                    <button
-                      onClick={handleSendRegisterOtp}
-                      disabled={isLoading}
-                      className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300"
-                    >
-                      {isLoading ? (
-                        'Sending...'
-                      ) : (
-                        <>
-                          <FiSend className="mr-2" />
-                          Send OTP
-                        </>
-                      )}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleVerifyRegisterOtp}
-                      disabled={isLoading}
-                      className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300"
-                    >
-                      {isLoading ? 'Verifying...' : 'Verify & Register'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
+            {errors.general && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">{errors.general}</div>}
+            
+            {activeTab === 'login' && renderLoginForm()}
+            {activeTab === 'register' && renderRegisterForm()}
+            {activeTab === 'forgot' && renderForgotPasswordForm()}
           </div>
-
           <div className="mt-6 text-center text-sm text-gray-600">
-            {activeTab === 'login' ? (
-              <p>
-                Don't have an account?{' '}
-                <button
-                  onClick={() => setActiveTab('register')}
-                  className="font-medium text-indigo-600 hover:text-indigo-500"
-                >
-                  Sign up
-                </button>
-              </p>
-            ) : (
-              <p>
-                Already have an account?{' '}
-                <button
-                  onClick={() => setActiveTab('login')}
-                  className="font-medium text-indigo-600 hover:text-indigo-500"
-                >
-                  Sign in
-                </button>
-              </p>
-            )}
+            {activeTab === 'login' && <p>Don't have an account? <button onClick={() => handleTabChange('register')} className="font-medium text-indigo-600 hover:text-indigo-500">Sign up</button></p>}
+            {activeTab === 'register' && <p>Already have an account? <button onClick={() => handleTabChange('login')} className="font-medium text-indigo-600 hover:text-indigo-500">Sign in</button></p>}
           </div>
         </div>
       </div>
-    </div>  
+    </div>
   );
 }
+
+// Helper component for inputs to reduce repetition
+const InputWithIcon = ({ icon, name, type = 'text', placeholder, value, onChange, error, required, isPassword, toggleVisibility }) => (
+    <div>
+        <label htmlFor={name} className="sr-only">{placeholder}</label>
+        <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">{React.cloneElement(icon, { className: 'h-5 w-5 text-gray-400' })}</div>
+            <input
+                id={name}
+                name={name}
+                type={type}
+                placeholder={placeholder}
+                value={value}
+                onChange={onChange}
+                required={required}
+                className={`block w-full pl-10 pr-3 py-3 border ${error ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:text-sm`}
+            />
+            {isPassword && (
+                <button type="button" onClick={toggleVisibility} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">
+                    {type === 'password' ? <FaEyeSlash /> : <FaEye />}
+                </button>
+            )}
+        </div>
+        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+    </div>
+);
 
 export default Auth;

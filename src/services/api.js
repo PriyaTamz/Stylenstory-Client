@@ -2,13 +2,15 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:5000/api/user';
 
-// Create axios instance with default credentials
+// Create an axios instance. 
+// 'withCredentials: true' is important if your server uses cookies for session management.
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // This ensures cookies are sent with all requests
+  withCredentials: true, 
 });
 
-// Helper function to set auth token
+// Helper function to set the Authorization header with the JWT token.
+// This is used if the token is stored in localStorage and sent as a Bearer token.
 const setAuthToken = (token) => {
   if (token) {
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -17,72 +19,64 @@ const setAuthToken = (token) => {
   }
 };
 
-// Register new user
+// 1. Register new user
 export const registerUser = async (userData) => {
   try {
-    const response = await api.post('/register', userData, {
-      withCredentials: true // Explicitly set for registration
-    });
+    // The new API expects firstName, lastName, phone, email, password
+    const response = await api.post('/register', userData);
     return response.data;
   } catch (error) {
+    // Throw a more informative error message from the server response
     throw error.response?.data || { message: 'Registration failed' };
   }
 };
 
-// Verify OTP for registration
-export const verifyRegisterOtp = async (otpData) => {
+// 2. Login user
+export const loginUser = async (credentials) => {
   try {
-    const response = await api.post('/verify-otp', otpData, {
-      withCredentials: true // Needed for session cookies
-    });
+    // The new API expects email and password
+    const response = await api.post('/login', credentials);
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'OTP verification failed' };
+    throw error.response?.data || { message: 'Login failed' };
   }
 };
 
-// Request OTP for login
-export const requestLoginOtp = async (phone) => {
-  try {
-    const response = await api.post('/request-otp', { phone }, {
-      withCredentials: true // For session tracking
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Failed to send OTP' };
-  }
+// 3. Forgot Password
+export const forgotPassword = async (email) => {
+    try {
+        const response = await api.post('/forgot-password', { email });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Forgot password request failed' };
+    }
 };
 
-// Verify OTP for login
-export const verifyLoginOtp = async (otpData) => {
-  try {
-    const response = await api.post('/verify-otp', otpData, {
-      withCredentials: true // For session cookies
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'OTP verification failed' };
-  }
+// 4. Reset Password
+export const resetPassword = async (token, newPassword) => {
+    try {
+        const response = await api.post(`/reset-password/${token}`, { newPassword });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || { message: 'Password reset failed' };
+    }
 };
 
-// Check authentication status
+// 5. Check authentication status
 export const checkAuthStatus = async () => {
   try {
-    const response = await api.get('/check-auth', {
-      withCredentials: true // Required for auth check
-    });
+    // This endpoint should verify the token (sent either as a cookie or Bearer token)
+    const response = await api.get('/check-auth');
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Authentication check failed' };
   }
 };
 
-// Logout user
+// 6. Logout user
 export const logoutUser = async () => {
   try {
-    const response = await api.post('/logout', {}, {
-      withCredentials: true // Needed to clear session cookies
-    });
+    const response = await api.post('/logout', {});
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Logout failed' };

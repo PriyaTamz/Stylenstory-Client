@@ -11,7 +11,8 @@ import ContactPage from './pages/ContactPage';
 import Auth from './pages/Auth';
 import ProfilePage from './pages/ProfilePage';
 import OrdersPage from './pages/OrdersPage';
-import CartPage from './pages/CartPage'; // <-- IMPORT THE NEW CART PAGE
+import CartPage from './pages/CartPage';
+import ResetPasswordPage from './pages/ResetPasswordPage'; // <-- IMPORT THE NEW PAGE
 
 // Admin pages and layout
 import AdminLogin from './pages/admin/AdminLogin';
@@ -35,7 +36,8 @@ const AppRoutes = () => {
       <Route path="/about" element={<AboutPage />} />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/auth" element={<Auth />} />
-      <Route path="/cart" element={<CartPage />} /> {/* <-- ADD THE CART ROUTE */}
+      <Route path="/cart" element={<CartPage />} />
+      <Route path="/reset-password/:token" element={<ResetPasswordPage />} /> {/* <-- ADD THE RESET PASSWORD ROUTE */}
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
       <Route path="*" element={<NotFoundPage />} />
