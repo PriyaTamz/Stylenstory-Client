@@ -67,7 +67,6 @@ const AdminLogin = () => {
             <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500">
               <FiLock className="text-gray-400 mr-2" />
               <input
-                // MODIFIED: Input type is now dynamic based on state
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
