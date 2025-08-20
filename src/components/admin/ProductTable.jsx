@@ -15,7 +15,7 @@ const ProductTable = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://localhost:5000/api/product");
+      const response = await axios.get("https://menstshirtstore-backend.onrender.com/api/product");
       setProducts(response.data || []);
     } catch (error) {
       console.error("Error fetching products:", error);
