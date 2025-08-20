@@ -85,7 +85,7 @@ const ProductForm = ({ product, onCancel, onSuccess }) => {
     try {
       if (product) {
         await axios.put(
-          `http://localhost:5000/api/product/${product._id}`,
+          `https://menstshirtstore-backend.onrender.com/api/product/${product._id}`,
           data,
           {
             headers: { "Content-Type": "multipart/form-data" },
@@ -94,7 +94,7 @@ const ProductForm = ({ product, onCancel, onSuccess }) => {
         );
       } else {
         await axios.post(
-          "http://localhost:5000/api/product/create",
+          "https://menstshirtstore-backend.onrender.com/api/product/create",
           data,
           {
             headers: { "Content-Type": "multipart/form-data" },
