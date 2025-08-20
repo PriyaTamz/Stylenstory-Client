@@ -14,7 +14,7 @@ const OrdersPage = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await axios.get("https://menstshirtstore-backend.onrender.com/api/order/admin/orders", {
+        const response = await axios.get("https://menstshirtstore-backend.onrender.com/api/order/user-order", {
           withCredentials: true,
         });
         setOrders(response.data.orders || []);
@@ -46,7 +46,7 @@ const OrdersPage = () => {
 
     try {
       await axios.post(
-        "https://menstshirtstore-backend.onrender.com/api/order/admin/refund",
+        "https://menstshirtstore-backend.onrender.com/api/order/return",
         {
           ...returnModal,
           reason: returnReason,
