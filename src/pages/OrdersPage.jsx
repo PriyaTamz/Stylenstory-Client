@@ -12,7 +12,7 @@ const OrdersPage = () => {
     const fetchOrders = async () => {
       try {
         const res = await axios.get(
-          "https://menstshirtstore-backend.onrender.com/api/order/user-order",
+          "https://menstshirtstore-backend.onrender.com/api/order/admin/orders",
           {
             withCredentials: true,
           }
