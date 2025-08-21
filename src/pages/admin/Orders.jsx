@@ -100,13 +100,13 @@ const AdminOrdersPage = () => {
                       {new Date(order.createdAt).toLocaleDateString("en-US")}
                     </td>
                     <td className="p-3">
-                      {order.userId?.user}
+                      {order.user?.name}
                       <br />
                       <span className="text-xs text-gray-500">
-                        {order.userId?.email}
+                        {order.user?.email}
                       </span>
                     </td>
-                    <td className="p-3">{item.productId?.title}</td>
+                    <td className="p-3">{item.productId?.name}</td>
                     <td className="p-3 text-center">{item.quantity}</td>
                     <td className="p-3 text-center font-medium">
                       ₹
