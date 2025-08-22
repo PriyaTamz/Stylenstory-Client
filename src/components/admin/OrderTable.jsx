@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import authServices from "../../service/authService";
 
 const OrderTable = ({ orders }) => {
   const [orderList, setOrderList] = useState(orders);
@@ -35,17 +36,11 @@ const OrderTable = ({ orders }) => {
     if (!confirm) return;
 
     try {
-      const res = await axios.post(
-        "https://menstshirtstore-backend.onrender.com/api/order/admin/refund",
-        {
+      const res = await authServices.refundOrder({
           orderId: order.id,
           paymentId: order.paymentId,
           amount: order.amount,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+        });
 
       alert("Refund successful!");
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import UserTable from '../../components/admin/UserTable';
+import authServices from '../../service/authService';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -8,9 +9,7 @@ const Users = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("https://menstshirtstore-backend.onrender.com/api/order/admin/all-usersData", {
-        withCredentials: true, // include cookies (if using JWT auth with cookies)
-      });
+      const res = await authServices.getAllUsersData();
 
       if (res.data.success) {
         const formattedUsers = res.data.users.map((user) => ({

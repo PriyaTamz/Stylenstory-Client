@@ -12,9 +12,11 @@ import RazorpayPayment from "../components/ui/RazorpayPayment.jsx";
 import { toast } from "react-toastify";
 import { useCart } from "../context/CartContext";
 import { useAddress } from "../context/AddressContext";
+import authServices from "../service/authService.js";
 
 const CartPage = () => {
-  const { cart, cartTotal, cartCount, removeFromCart, updateQuantity } = useCart();
+  const { cart, cartTotal, cartCount, removeFromCart, updateQuantity } =
+    useCart();
   const {
     addressList,
     selectedAddressId,
@@ -22,6 +24,7 @@ const CartPage = () => {
     addAddress,
     deleteAddress,
     selectAddress,
+    fetchAddresses
   } = useAddress();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -113,20 +116,12 @@ const CartPage = () => {
   const handleSaveAddress = async () => {
     try {
       const token = localStorage.getItem("authToken");
-      await axios.post(
-        "https://menstshirtstore-backend.onrender.com/api/address", 
-        shippingInfo,
-        {
-          withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      
+      await authServices.saveAddress(shippingInfo, token);
+
       toast.success("Address saved successfully");
       setIsModalOpen(false);
-      setCheckoutStep("payment");
+
+      await fetchAddresses();
     } catch (error) {
       console.error("Failed to save address:", error);
       toast.error("Failed to save address. Please try again.");
@@ -134,20 +129,13 @@ const CartPage = () => {
   };
 
   const handleDeleteAddress = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this address?")) return;
+    if (!window.confirm("Are you sure you want to delete this address?"))
+      return;
 
     try {
       const token = localStorage.getItem("authToken");
-      await axios.delete(
-        `https://menstshirtstore-backend.onrender.com/api/address/${id}`,
-        {
-          withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      
+      await authServices.deleteAddress(id, token);
+
       toast.success("Address deleted successfully");
     } catch (err) {
       console.error("Delete failed", err);

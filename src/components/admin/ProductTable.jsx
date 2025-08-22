@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { FiEdit, FiTrash2, FiPlus, FiChevronLeft, FiChevronRight, FiSearch } from "react-icons/fi";
 import ProductForm from "./ProductForm";
+import authServices from "../../service/authService";
 
 const ProductTable = () => {
   const [products, setProducts] = useState([]);
@@ -15,7 +16,7 @@ const ProductTable = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("https://menstshirtstore-backend.onrender.com/api/product");
+      const response = await authServices.getProducts();
       setProducts(response.data || []);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -41,9 +42,7 @@ const ProductTable = () => {
   const handleDelete = async (productId) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/product/${productId}`, {
-          withCredentials: true,
-        });
+        await authServices.deleteProduct(productId);
         fetchProducts();
       } catch (error) {
         console.error("Delete failed:", error);

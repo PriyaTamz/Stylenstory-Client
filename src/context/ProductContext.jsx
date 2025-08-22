@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios'; // Import axios directly here
+import authServices from '../service/authService';
 
 const ProductContext = createContext();
 
@@ -10,7 +10,6 @@ export const ProductProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [priceRange, setPriceRange] = useState([0, 1000]); // Adjusted default max price
   const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch all products from the API on initial load
@@ -18,8 +17,8 @@ export const ProductProvider = ({ children }) => {
     const loadProducts = async () => {
       try {
         setLoading(true);
-        // API call is made directly here
-        const response = await axios.get('https://menstshirtstore-backend.onrender.com/api/product');
+        const response = await authServices.getProducts();
+        console.log(response);
         setAllProducts(response.data);
         setFilteredProducts(response.data); 
       } catch (err) {
@@ -37,12 +36,10 @@ export const ProductProvider = ({ children }) => {
     let result = allProducts;
 
     if (selectedCategory !== 'all') {
-      result = result.filter(product => product.category.includes(selectedCategory));
+      result = result.filter(product => 
+        Array.isArray(product.category) && product.category.includes(selectedCategory)
+      );
     }
-
-    result = result.filter(
-      product => product.price >= priceRange[0] && product.price <= priceRange[1]
-    );
 
     if (searchTerm) {
       result = result.filter(product =>
@@ -52,7 +49,7 @@ export const ProductProvider = ({ children }) => {
     }
 
     setFilteredProducts(result);
-  }, [selectedCategory, priceRange, searchTerm, allProducts]);
+  }, [selectedCategory, searchTerm, allProducts]);
 
   const getProductById = id => allProducts.find(product => product._id === id);
 
@@ -62,6 +59,7 @@ export const ProductProvider = ({ children }) => {
     return allProducts
       .filter(product => 
         product._id !== currentProductId && 
+        Array.isArray(product.category) && 
         product.category.some(cat => productCategories.includes(cat))
       )
       .slice(0, limit);
@@ -76,8 +74,6 @@ export const ProductProvider = ({ children }) => {
         error,
         selectedCategory,
         setSelectedCategory,
-        priceRange,
-        setPriceRange,
         searchTerm,
         setSearchTerm,
         getProductById,

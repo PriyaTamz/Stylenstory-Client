@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useAuth } from './AuthContext';
+import authServices from '../service/authService';
 
 const AddressContext = createContext();
 
@@ -20,7 +21,7 @@ export const AddressProvider = ({ children }) => {
     }
     setLoading(true);
     try {
-      const response = await axios.get("https://menstshirtstore-backend.onrender.com/api/address", { withCredentials: true });
+      const response = await authServices.getAddresses();
       const addresses = response.data.addresses || [];
       setAddressList(addresses);
       if (addresses.length > 0) {
@@ -41,7 +42,7 @@ export const AddressProvider = ({ children }) => {
   const addAddress = async (addressData) => {
     setLoading(true);
     try {
-      const response = await axios.post("https://menstshirtstore-backend.onrender.com/api/address", addressData, { withCredentials: true });
+      const response = await authServices.addAddress(addressData);
       const newAddress = response.data.address;
 
       let updatedList = [...addressList];
@@ -67,7 +68,7 @@ export const AddressProvider = ({ children }) => {
     if (!window.confirm("Are you sure you want to delete this address?")) return;
     setLoading(true);
     try {
-      await axios.delete(`https://menstshirtstore-backend.onrender.com/api/address/${addressId}`, { withCredentials: true });
+      await authServices.deleteAddress(addressId);
       
       setAddressList(prev => prev.filter(addr => addr._id !== addressId));
       if (selectedAddressId === addressId) {
@@ -94,6 +95,7 @@ export const AddressProvider = ({ children }) => {
     addAddress,
     deleteAddress,
     selectAddress,
+    fetchAddresses,
   };
 
   return (

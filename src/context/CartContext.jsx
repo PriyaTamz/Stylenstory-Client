@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import { useAuth } from "./AuthContext";
 import { useNavigate } from "react-router-dom";
+import authServices from "../service/authService";
 
 const CartContext = createContext();
 
@@ -22,12 +23,7 @@ export const CartProvider = ({ children }) => {
         return;
       }
 
-      const response = await axios.get("https://menstshirtstore-backend.onrender.com/api/cart", {
-        withCredentials: true,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await authServices.getCart();
 
       const rawCart = response.data.items || [];
       const cartItems = rawCart.map((item) => ({
@@ -57,18 +53,12 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = async (product, quantity = 1, size, color) => {
     try {
-      const response = await axios.post(
-        "https://menstshirtstore-backend.onrender.com/api/cart/add",
-        {
+      const response = await authServices.addToCart({
           productId: product._id,
           quantity,
           size,
           color,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+        });
 
       await fetchCart();
       toast.success(`${product.title} added to cart!`);
@@ -91,17 +81,7 @@ export const CartProvider = ({ children }) => {
   const removeFromCart = async (productId, size, color) => {
     try {
       const token = localStorage.getItem("authToken");
-      await axios.post(
-        "https://menstshirtstore-backend.onrender.com/api/cart/remove",
-        { productId, size, color },
-        {
-          withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+      await authServices.removeFromCart({ productId, size, color });
       await fetchCart();
       toast.success("Item removed from cart.");
     } catch (error) {
@@ -118,16 +98,7 @@ export const CartProvider = ({ children }) => {
 
     try {
       const token = localStorage.getItem("authToken");
-      await axios.put(
-        "https://menstshirtstore-backend.onrender.com/api/cart/update",
-        { productId, size, color, quantity: newQuantity },
-        {
-          withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await authServices.updateQuantity({ productId, size, color, quantity: newQuantity });
 
       await fetchCart();
       toast.success("Quantity updated successfully");
@@ -140,12 +111,7 @@ export const CartProvider = ({ children }) => {
   const clearCart = async () => {
     try {
       const token = localStorage.getItem("authToken");
-      await axios.delete("https://menstshirtstore-backend.onrender.com/api/cart/clear", {
-        withCredentials: true,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await authServices.clearCart();
       setCart([]);
       toast.success("Cart cleared successfully");
     } catch (error) {

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import authServices from "../service/authService";
 
 const OrdersPage = () => {
   const { user } = useAuth();
@@ -11,12 +12,7 @@ const OrdersPage = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await axios.get(
-          "https://menstshirtstore-backend.onrender.com/api/order/user-order",
-          {
-            withCredentials: true,
-          }
-        );
+        const res = await authServices.getUserOrders();
 
         if (res.data?.success && Array.isArray(res.data.orders)) {
           setOrders(res.data.orders);
@@ -39,30 +35,19 @@ const OrdersPage = () => {
     if (!reason) return;
 
     try {
-      const res = await axios.post(
-        "https://menstshirtstore-backend.onrender.com/api/order/return",
-        { orderId, productId, reason },
-        { withCredentials: true }
-      );
+      const res = await authServices.requestReturn({
+        orderId,
+        productId,
+        reason,
+      });
 
-      console.log("Fetched orders:", res.data.orders);
+      const updatedOrder = res.data.order; // get updated order from backend
+
+      setOrders((prev) =>
+        prev.map((order) => (order._id === orderId ? updatedOrder : order))
+      );
 
       alert("Return request sent successfully");
-      // Optionally reload orders:
-      setOrders((prev) =>
-        prev.map((order) =>
-          order._id === orderId
-            ? {
-                ...order,
-                cartItems: order.cartItems.map((item) =>
-                  item.productId._id === productId
-                    ? { ...item, returnRequested: true }
-                    : item
-                ),
-              }
-            : order
-        )
-      );
     } catch (err) {
       console.error("Return request error:", err);
       alert("Failed to request return");
@@ -193,7 +178,7 @@ const OrdersPage = () => {
                   </p>
                 </div>
                 <p className="text-lg font-bold text-gray-900 mt-4">
-                  Total Amount Paid: ₹{order.totalAmount}
+                  Total Amount Paid: ₹{Math.floor(order.totalAmount)}
                 </p>
 
                 {order.status === "Refunded" && (

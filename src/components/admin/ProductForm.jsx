@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { FiX, FiPlus } from "react-icons/fi";
+import authServices from "../../service/authService";
 
 const ProductForm = ({ product, onCancel, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -84,23 +85,9 @@ const ProductForm = ({ product, onCancel, onSuccess }) => {
 
     try {
       if (product) {
-        await axios.put(
-          `https://menstshirtstore-backend.onrender.com/api/product/${product._id}`,
-          data,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-            withCredentials: true,
-          }
-        );
+        await authServices.updateProduct(product._id, data);
       } else {
-        await axios.post(
-          "https://menstshirtstore-backend.onrender.com/api/product/create",
-          data,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-            withCredentials: true,
-          }
-        );
+        await authServices.createProduct(data);
       }
 
       onSuccess();

@@ -1,29 +1,21 @@
 import axios from 'axios';
 
-const ADMIN_API_BASE_URL = 'https://menstshirtstore-backend.onrender.com/api/admin';
+// 🔹 Toggle between local and deployed URLs
+const LOCAL_API_BASE_URL = "http://localhost:5000/api/admin"; 
 
 const adminApi = axios.create({
-  baseURL: ADMIN_API_BASE_URL,
+  baseURL: LOCAL_API_BASE_URL,
   withCredentials: true,
 });
 
-// ADDED: Axios interceptor to handle auth errors globally
-// This is our "safety net" now that we aren't checking auth on page load.
 adminApi.interceptors.response.use(
-  // If the response is successful, just return it
   (response) => response,
-  // If there's an error...
   (error) => {
-    // Check if the error is a 401 Unauthorized
     if (error.response && error.response.status === 401) {
       console.log('Session expired or invalid. Forcing logout.');
-      // Remove the local storage flag
       localStorage.removeItem('isAdminLoggedIn');
-      // Force a redirect to the admin login page.
-      // Using window.location.href ensures a full page reload, clearing all state.
       window.location.href = '/admin';
     }
-    // For all other errors, just pass them along
     return Promise.reject(error);
   }
 );
@@ -48,13 +40,6 @@ export const loginAdmin = async (credentials) => {
     throw error.response?.data || { message: 'Admin login failed' };
   }
 };
-
-// REMOVED: The checkAdminAuthStatus function is no longer needed.
-/*
-export const checkAdminAuthStatus = async () => {
-  // ...
-};
-*/
 
 // Admin logout
 export const logoutAdmin = async () => {

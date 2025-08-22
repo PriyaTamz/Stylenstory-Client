@@ -10,6 +10,7 @@ import {
   FiLoader,
   FiAlertTriangle,
 } from "react-icons/fi";
+import authServices from "../service/authService";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -33,9 +34,7 @@ const ProductDetail = () => {
       window.scrollTo(0, 0);
       try {
         setLoading(true);
-        const response = await axios.get(
-          `https://menstshirtstore-backend.onrender.com/api/product/${id}`
-        );
+        const response = await authServices.getProductById(id);
         const fetchedProduct = response.data;
         setProduct(fetchedProduct);
 
