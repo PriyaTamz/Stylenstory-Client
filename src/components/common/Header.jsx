@@ -190,9 +190,6 @@ const Header = () => {
                         transition={{ duration: 0.2 }}
                         className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-100"
                       >
-                        <div className="px-4 py-2 text-sm font-medium text-gray-700 border-b">
-                          Hi, {user?.firstName || "User"}
-                        </div>
                         <Link
                           to="/profile"
                           className="block px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
