@@ -13,8 +13,18 @@ import { toast } from "react-toastify";
 import { useCart } from "../context/CartContext";
 import { useAddress } from "../context/AddressContext";
 import authServices from "../service/authService.js";
+import { useLocation, useNavigate } from "react-router-dom";
 
-const CartPage = () => {
+const CartPage = ({ step }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const goToCart = () => navigate("/cart");
+  const goToShipping = () => navigate("/cart/shipping");
+  const goToPayment = () => navigate("/cart/payment");
+
+  const pathParts = location.pathname.split("/"); // ['/cart', 'shipping']
+  const currentStep = pathParts[2] || "cart"; // default to 'cart'
+
   const { cart, cartTotal, cartCount, removeFromCart, updateQuantity } =
     useCart();
   const {
@@ -24,11 +34,11 @@ const CartPage = () => {
     addAddress,
     deleteAddress,
     selectAddress,
-    fetchAddresses
+    fetchAddresses,
   } = useAddress();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [checkoutStep, setCheckoutStep] = useState("cart");
+  //const [checkoutStep, setCheckoutStep] = useState("cart");
 
   const initialFormState = {
     type: "home",
@@ -145,7 +155,7 @@ const CartPage = () => {
 
   const SavedAddresses = () => {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-[#e5e7eb]">
+      <div className="bg-white p-5">
         <h3 className="text-xl font-semibold mb-4">Saved Addresses</h3>
         {addressList.length === 0 ? (
           <p className="text-[#6b7280]">No saved addresses found.</p>
@@ -210,11 +220,18 @@ const CartPage = () => {
             ))}
           </ul>
         )}
-        <div className="mt-6">
+        <div className="mt-6 flex justify-between">
+          <button
+            onClick={() => navigate("/cart")}
+            className="text-[#4f46e5] hover:text-[#4338ca] flex items-center font-medium"
+          >
+            &larr; Back to Cart
+          </button>
+
           <button
             disabled={!selectedAddressId}
-            onClick={() => setCheckoutStep("payment")}
-            className={`w-full bg-[#4f46e5] hover:bg-[#4338ca] text-white px-6 py-3 rounded-md font-medium transition ${
+            onClick={() => navigate("/cart/payment")}
+            className={`bg-[#4f46e5] hover:bg-[#4338ca] text-white px-6 py-3 rounded-md font-medium transition ${
               !selectedAddressId ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
@@ -244,9 +261,9 @@ const CartPage = () => {
           <span>₹{cartTotal.toFixed(2)}</span>
         </div>
       </div>
-      {checkoutStep === "cart" && (
+      {currentStep  === "cart" && (
         <button
-          onClick={() => setCheckoutStep("shipping")}
+          onClick={() => navigate("/cart/shipping")}
           className="mt-6 w-full bg-indigo-600 text-white py-3 rounded-md font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
         >
           Proceed to Checkout <FiChevronRight />
@@ -260,10 +277,12 @@ const CartPage = () => {
       {["Cart", "Shipping", "Payment"].map((step, index) => {
         const stepKey = step.toLowerCase();
         const isActive =
-          checkoutStep === stepKey ||
-          (checkoutStep === "shipping" && index === 0) ||
-          (checkoutStep === "payment" && index < 2);
-        const isCurrent = checkoutStep === stepKey;
+          currentStep === step ||
+          (currentStep === "shipping" && index === 0) ||
+          (currentStep === "payment" && index < 2);
+
+        const isCurrent = currentStep === step;
+
         return (
           <React.Fragment key={step}>
             <div
@@ -328,7 +347,7 @@ const CartPage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            {checkoutStep === "cart" && (
+            {currentStep  === "cart" && (
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <h2 className="text-2xl font-bold mb-4">
                   Shopping Cart ({cartCount} items)
@@ -344,7 +363,7 @@ const CartPage = () => {
               </div>
             )}
 
-            {checkoutStep === "shipping" && (
+            {currentStep  === "shipping" && (
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-bold">Shipping Address</h2>
@@ -369,11 +388,10 @@ const CartPage = () => {
               </div>
             )}
 
-            {checkoutStep === "payment" && (
+            {currentStep  === "payment" && (
               <RazorpayPayment
                 cartTotal={cartTotal}
                 addressId={selectedAddressId}
-                setCheckoutStep={setCheckoutStep}
                 userInfo={shippingInfo}
               />
             )}

@@ -4,13 +4,9 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { toast } from "react-toastify";
+import RazorpayIcon from "../../assets/razorpay-icon.svg";
 
-const RazorpayPayment = ({
-  cartTotal,
-  addressId,
-  setCheckoutStep,
-  userInfo,
-}) => {
+const RazorpayPayment = ({ cartTotal, addressId, userInfo }) => {
   const [paymentMethod, setPaymentMethod] = useState("upi");
   const navigate = useNavigate();
   const { clearCart } = useCart();
@@ -119,12 +115,7 @@ const RazorpayPayment = ({
         }`}
       >
         <div className="flex items-center">
-          <img
-            src="https://cdn.razorpay.com/static/assets/razorpay-glyph.svg"
-            alt="Razorpay"
-            className="h-8 mr-3"
-          />
-          <span className="font-medium">UPI</span>
+          <img src={RazorpayIcon} alt="Razorpay" className="h-6 w-20 mr-2" />
         </div>
         <div className="w-5 h-5 rounded-full border-2 border-[#4f46e5] flex items-center justify-center">
           {paymentMethod === "upi" && (
@@ -150,7 +141,7 @@ const RazorpayPayment = ({
 
       <div className="mt-8 flex justify-between">
         <button
-          onClick={() => setCheckoutStep("shipping")}
+          onClick={() => navigate("/cart/shipping")}
           className="text-[#4f46e5] hover:text-[#4338ca] flex items-center font-medium"
         >
           &larr; Back to Shipping
