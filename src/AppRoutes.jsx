@@ -26,11 +26,16 @@ import AdminUsers from "./pages/admin/Users";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import ProtectedAdminRoute from "./components/auth/ProtectedAdminRoute";
 
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsAndConditions from "./pages/TermsAndConditions";
+
 const AppRoutes = () => {
   return (
     <Routes>
       {/* User Routes */}
       <Route path="/" element={<HomePage />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsAndConditions />} />
       <Route path="/products" element={<ProductListing />} />
       <Route path="/product/:id" element={<ProductDetail />} />
       <Route path="/about" element={<AboutPage />} />
@@ -59,11 +64,9 @@ const AppRoutes = () => {
         }
       />
       <Route path="*" element={<NotFoundPage />} />
-      
       <Route path="/cart" element={<CartPage step="cart" />} />
       <Route path="/cart/shipping" element={<CartPage step="shipping" />} />
       <Route path="/cart/payment" element={<CartPage step="payment" />} />
-      
       {/* Admin Login Route */}
       <Route path="/admin" element={<AdminLogin />} />
       {/* Admin Dashboard Routes */}
