@@ -168,7 +168,7 @@ const AdminOrdersPage = () => {
                     {/* Actions */}
                     <td className="p-3 text-center space-y-1">
                       {/* Refund Button */}
-                      {item.returnRequested && item.status !== "Refunded" ? (
+                      {item.returnRequested && order.status !== "Refunded" ? (
                         <button
                           onClick={() => handleRefund(order._id, item)}
                           disabled={updatingProduct === item._id}
@@ -179,7 +179,7 @@ const AdminOrdersPage = () => {
                       ) : null}
 
                       {/* Refunded Label */}
-                      {item.status === "Refunded" && (
+                      {order.status === "Refunded" && (
                         <span className="w-full inline-block px-2 py-1 bg-green-100 text-green-800 text-xs rounded text-center">
                           Refunded
                         </span>
@@ -197,7 +197,7 @@ const AdminOrdersPage = () => {
                       )}
 
                       {/* Placeholder if nothing to show */}
-                      {!item.returnRequested && item.status !== "Refunded" && (
+                      {!item.returnRequested && order.status !== "Refunded" && (
                         <span>-</span>
                       )}
                     </td>

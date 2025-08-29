@@ -3,7 +3,7 @@ import axios from "axios";
 const baseurl =
     process.env.NODE_ENV === "production"
         ? "https://menstshirtstore-backend.onrender.com"
-        : "https://menstshirtstore-backend.onrender.com"; 
+        : "http://localhost:5000"; 
 
 const instance = axios.create({
     baseURL: baseurl,

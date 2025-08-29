@@ -37,7 +37,7 @@ const RazorpayPayment = ({ cartTotal, addressId, userInfo }) => {
       try {
         const token = localStorage.getItem("authToken");
         const res = await axios.post(
-          "https://menstshirtstore-backend.onrender.com/api/order/checkout",
+          "http://localhost:5000/api/order/checkout",
           {
             addressId,
             method: "razorpay",
@@ -50,11 +50,10 @@ const RazorpayPayment = ({ cartTotal, addressId, userInfo }) => {
           }
         );
 
-        const { razorpayOrderId, totalAmount } = res.data;
+        const { razorpayOrderId } = res.data;
 
         const options = {
-          key: "rzp_test_AIlWQhWt8qVNVK",
-          amount: totalAmount * 100,
+          key: "rzp_live_RB3S6jYQpHD0My",
           currency: "INR",
           name: "Style N Store",
           description: "Order Payment",
@@ -62,7 +61,7 @@ const RazorpayPayment = ({ cartTotal, addressId, userInfo }) => {
           handler: async function (response) {
             try {
               const verifyRes = await axios.post(
-                "https://menstshirtstore-backend.onrender.com/api/order/verify",
+                "http://localhost:5000/api/order/verify",
                 {
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
