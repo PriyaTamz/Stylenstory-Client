@@ -37,7 +37,7 @@ const RazorpayPayment = ({ cartTotal, addressId, userInfo }) => {
       try {
         const token = localStorage.getItem("authToken");
         const res = await axios.post(
-          "http://localhost:5000/api/order/checkout",
+          "https://menstshirtstore-backend.onrender.com/api/order/checkout",
           {
             addressId,
             method: "razorpay",
@@ -61,7 +61,7 @@ const RazorpayPayment = ({ cartTotal, addressId, userInfo }) => {
           handler: async function (response) {
             try {
               const verifyRes = await axios.post(
-                "http://localhost:5000/api/order/verify",
+                "https://menstshirtstore-backend.onrender.com/api/order/verify",
                 {
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
